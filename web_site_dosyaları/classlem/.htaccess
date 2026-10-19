@@ -1,0 +1,10 @@
+﻿# ClassLem - PHP 8.3 zorla (Plesk/Apache)
+AddHandler application/x-httpd-php83 .php
+
+# Alternatif (yorum kaldir ve usttekileri yoruma al)
+# <FilesMatch "\.php$">
+#     SetHandler "proxy:fcgi://127.0.0.1:9083"
+# </FilesMatch>
+
+Options -Indexes
+AddDefaultCharset UTF-8

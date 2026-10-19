@@ -1,0 +1,26 @@
+
+   INFO  Running migrations.  
+
+  2026_02_28_040942_create_form_survey_responses_table  3.91ms FAIL
+
+   Illuminate\Database\QueryException 
+
+  SQLSTATE[42S01]: Base table or view already exists: 1050 Table 'form_survey_responses' already exists (Connection: mysql, SQL: create table `form_survey_responses` (`id` bigint unsigned not null auto_increment primary key, `tenant_id` bigint unsigned not null, `form_survey_id` bigint unsigned not null, `respondent_id` bigint unsigned null, `respondent_type` varchar(255) null, `answers` json null, `notes` text null, `is_anonymous` tinyint(1) not null default '0', `created_by` bigint unsigned null, `created_at` timestamp null, `updated_at` timestamp null) default character set utf8mb4 collate 'utf8mb4_unicode_ci')
+
+  at vendor\laravel\framework\src\Illuminate\Database\Connection.php:825
+    821▕                     $this->getName(), $query, $this->prepareBindings($bindings), $e
+    822▕                 );
+    823▕             }
+    824▕ 
+  ➜ 825▕             throw new QueryException(
+    826▕                 $this->getName(), $query, $this->prepareBindings($bindings), $e
+    827▕             );
+    828▕         }
+    829▕     }
+
+  1   vendor\laravel\framework\src\Illuminate\Database\Connection.php:571
+      PDOException::("SQLSTATE[42S01]: Base table or view already exists: 1050 Table 'form_survey_responses' already exists")
+
+  2   vendor\laravel\framework\src\Illuminate\Database\Connection.php:571
+      PDOStatement::execute()
+

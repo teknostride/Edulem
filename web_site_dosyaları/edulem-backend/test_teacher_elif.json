@@ -1,0 +1,90 @@
+{
+    "course_headers": [
+        {
+            "course_id": 3,
+            "course_name": "T\u00fcrk\u00e7e"
+        },
+        {
+            "course_id": 5,
+            "course_name": "Din K\u00fclt\u00fcr\u00fc"
+        },
+        {
+            "course_id": 1,
+            "course_name": "Matematik"
+        },
+        {
+            "course_id": 2,
+            "course_name": "Fen Bilgisi"
+        },
+        {
+            "course_id": 6,
+            "course_name": "\u0130ngilizce"
+        },
+        {
+            "course_id": 4,
+            "course_name": "\u0130nk\u0131lap"
+        }
+    ],
+    "elif_rana": {
+        "id": 189,
+        "student_no": "40",
+        "booklet_type": "M",
+        "total_net": 62.667,
+        "total_point": 208.667,
+        "rank": 4,
+        "course_scores": {
+            "3": {
+                "correct": 18,
+                "wrong": 1,
+                "blank": 0,
+                "net": 17.667,
+                "point": 70.667
+            },
+            "4": {
+                "correct": 5,
+                "wrong": 5,
+                "blank": 0,
+                "net": 3.333,
+                "point": 3.333
+            },
+            "5": {
+                "correct": 6,
+                "wrong": 4,
+                "blank": 0,
+                "net": 4.667,
+                "point": 4.667
+            },
+            "6": {
+                "correct": 7,
+                "wrong": 3,
+                "blank": 0,
+                "net": 6,
+                "point": 6
+            },
+            "1": {
+                "correct": 14,
+                "wrong": 5,
+                "blank": 1,
+                "net": 12.333,
+                "point": 49.333
+            },
+            "2": {
+                "correct": 19,
+                "wrong": 1,
+                "blank": 0,
+                "net": 18.667,
+                "point": 74.667
+            }
+        },
+        "student": {
+            "id": 6144,
+            "name": "EL\u0130F RANA YALDIR",
+            "school_no": "40",
+            "classroom_id": 10,
+            "classroom": {
+                "id": 10,
+                "name": "7-A"
+            }
+        }
+    }
+}

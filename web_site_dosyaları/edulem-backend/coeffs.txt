@@ -1,0 +1,81 @@
+Array
+(
+    [0] => Array
+        (
+            [id] => 15
+            [tenant_id] => 1
+            [exam_id] => 6
+            [course_id] => 1
+            [coefficient] => 4
+            [question_count] => 20
+            [sort_order] => 0
+            [created_at] => 2026-04-08T12:55:16.000000Z
+            [updated_at] => 2026-04-08T12:55:16.000000Z
+        )
+
+    [1] => Array
+        (
+            [id] => 16
+            [tenant_id] => 1
+            [exam_id] => 6
+            [course_id] => 2
+            [coefficient] => 4
+            [question_count] => 20
+            [sort_order] => 1
+            [created_at] => 2026-04-08T12:55:16.000000Z
+            [updated_at] => 2026-04-08T12:55:16.000000Z
+        )
+
+    [2] => Array
+        (
+            [id] => 25
+            [tenant_id] => 1
+            [exam_id] => 7
+            [course_id] => 3
+            [coefficient] => 4
+            [question_count] => 20
+            [sort_order] => 1
+            [created_at] => 2026-04-08T13:47:31.000000Z
+            [updated_at] => 2026-04-08T13:47:31.000000Z
+        )
+
+    [3] => Array
+        (
+            [id] => 26
+            [tenant_id] => 1
+            [exam_id] => 7
+            [course_id] => 4
+            [coefficient] => 1
+            [question_count] => 10
+            [sort_order] => 2
+            [created_at] => 2026-04-08T13:47:31.000000Z
+            [updated_at] => 2026-04-08T13:47:31.000000Z
+        )
+
+    [4] => Array
+        (
+            [id] => 27
+            [tenant_id] => 1
+            [exam_id] => 7
+            [course_id] => 5
+            [coefficient] => 1
+            [question_count] => 10
+            [sort_order] => 3
+            [created_at] => 2026-04-08T13:47:31.000000Z
+            [updated_at] => 2026-04-08T13:47:31.000000Z
+        )
+
+    [5] => Array
+        (
+            [id] => 28
+            [tenant_id] => 1
+            [exam_id] => 7
+            [course_id] => 6
+            [coefficient] => 1
+            [question_count] => 10
+            [sort_order] => 4
+            [created_at] => 2026-04-08T13:47:31.000000Z
+            [updated_at] => 2026-04-08T13:47:31.000000Z
+        )
+
+)

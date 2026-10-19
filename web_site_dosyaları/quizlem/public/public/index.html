@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>QuizLem - Gerçek Zamanlı Bilgi Yarışması</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  
+  <!-- Google Fonts: Plus Jakarta Sans, Outfit & Fredoka -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            brand: ['Outfit', 'sans-serif'],
+            fun: ['Fredoka', 'sans-serif']
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81'
+            }
+          },
+          boxShadow: {
+            'premium': '0 20px 40px -15px rgba(0, 0, 0, 0.07), 0 0 0 1px rgba(0, 0, 0, 0.04)',
+            'premium-hover': '0 30px 60px -20px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.06)',
+            'glow-indigo': '0 0 35px -5px rgba(99, 102, 241, 0.35)',
+            'glow-amber': '0 0 35px -5px rgba(245, 158, 11, 0.35)',
+            'glow-emerald': '0 0 35px -5px rgba(16, 185, 129, 0.35)',
+          },
+          animation: {
+            'bounce-short': 'bounce 0.6s ease-in-out 1',
+            'pulse-subtle': 'pulseSubtle 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'pop-in': 'popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+            'float-slow': 'floatSlow 7s ease-in-out infinite',
+            'float-medium': 'floatMed 5s ease-in-out infinite',
+            'spin-slow': 'spin 25s linear infinite',
+          },
+          keyframes: {
+            popIn: {
+              '0%': { transform: 'scale(0.92)', opacity: '0' },
+              '100%': { transform: 'scale(1)', opacity: '1' }
+            },
+            pulseSubtle: {
+              '0%, 100%': { opacity: '1' },
+              '50%': { opacity: '0.85' }
+            },
+            floatSlow: {
+              '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+              '50%': { transform: 'translateY(-14px) rotate(5deg)' }
+            },
+            floatMed: {
+              '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+              '50%': { transform: 'translateY(12px) rotate(-6deg)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Canvas Confetti for Podium celebration -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+  <!-- Socket.io Client (CDN + Local Fallback) -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script>
+    if (typeof io === 'undefined') {
+      document.write('<script src="socket.io/socket.io.js"><\/script>');
+    }
+  </script>
+
+  <style>
+    .shape-triangle {
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    }
+    .shape-diamond {
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    }
+    .shape-circle {
+      border-radius: 50%;
+    }
+    .shape-square {
+      border-radius: 18%;
+    }
+
+    .touch-action-manipulation {
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Modern Light Mesh Background with subtle ambient orbs */
+    .bg-mesh-light {
+      background-color: #f8fafc;
+      background-image: 
+        radial-gradient(at 10% 10%, rgba(99, 102, 241, 0.08) 0px, transparent 40%),
+        radial-gradient(at 90% 15%, rgba(245, 158, 11, 0.08) 0px, transparent 40%),
+        radial-gradient(at 50% 45%, rgba(241, 245, 249, 0.9) 0px, transparent 65%),
+        radial-gradient(at 85% 85%, rgba(16, 185, 129, 0.07) 0px, transparent 45%),
+        radial-gradient(at 15% 85%, rgba(139, 92, 246, 0.07) 0px, transparent 45%);
+    }
+
+    /* Ambient Floating Geometric Accents */
+    .bg-shape-red {
+      background: radial-gradient(circle, rgba(244, 63, 94, 0.12) 0%, rgba(244, 63, 94, 0) 70%);
+    }
+    .bg-shape-blue {
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0) 70%);
+    }
+    .bg-shape-amber {
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0) 70%);
+    }
+    .bg-shape-green {
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0) 70%);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(226, 232, 240, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.6);
+      border-radius: 6px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(100, 116, 139, 0.8);
+    }
+
+    /* ==================================================== */
+    /* ULTRA-PREMIUM 3D PODYUM & SAHNE SİSTEMİ (KAHOOT STİLİ) */
+    /* ==================================================== */
+    
+    /* Spot Işık Koni Efektleri (Theatrical Spotlights) */
+    .spotlight-beam-left {
+      background: linear-gradient(170deg, rgba(255, 255, 255, 0.45) 0%, rgba(249, 115, 22, 0.25) 45%, rgba(0, 0, 0, 0) 85%);
+      clip-path: polygon(30% 0%, 45% 0%, 75% 100%, 0% 100%);
+      mix-blend-mode: screen;
+      filter: blur(6px);
+    }
+    .spotlight-beam-right {
+      background: linear-gradient(190deg, rgba(255, 255, 255, 0.45) 0%, rgba(148, 163, 184, 0.25) 45%, rgba(0, 0, 0, 0) 85%);
+      clip-path: polygon(55% 0%, 70% 0%, 100% 100%, 25% 100%);
+      mix-blend-mode: screen;
+      filter: blur(6px);
+    }
+    .spotlight-beam-center {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(250, 204, 21, 0.35) 40%, rgba(0, 0, 0, 0) 90%);
+      clip-path: polygon(42% 0%, 58% 0%, 85% 100%, 15% 100%);
+      mix-blend-mode: screen;
+      filter: blur(6px);
+    }
+
+    /* 3D Podyum Basamakları */
+    .pedestal-gold-face {
+      background: linear-gradient(180deg, #facc15 0%, #eab308 25%, #ca8a04 60%, #713f12 100%);
+      box-shadow: 
+        inset 0 2px 4px rgba(255, 255, 255, 0.6),
+        inset 0 -4px 8px rgba(0, 0, 0, 0.4),
+        0 25px 50px -10px rgba(234, 179, 8, 0.45);
+      border-left: 3px solid rgba(255, 255, 255, 0.4);
+      border-right: 3px solid rgba(0, 0, 0, 0.35);
+    }
+    .pedestal-gold-top {
+      background: radial-gradient(ellipse at center, #fef08a 0%, #facc15 60%, #ca8a04 100%);
+      border: 2px solid #fef9c3;
+      box-shadow: 0 0 25px rgba(250, 204, 21, 0.6);
+    }
+
+    .pedestal-silver-face {
+      background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 25%, #94a3b8 60%, #334155 100%);
+      box-shadow: 
+        inset 0 2px 4px rgba(255, 255, 255, 0.7),
+        inset 0 -4px 8px rgba(0, 0, 0, 0.4),
+        0 20px 40px -10px rgba(148, 163, 184, 0.35);
+      border-left: 3px solid rgba(255, 255, 255, 0.45);
+      border-right: 3px solid rgba(0, 0, 0, 0.35);
+    }
+    .pedestal-silver-top {
+      background: radial-gradient(ellipse at center, #ffffff 0%, #e2e8f0 60%, #94a3b8 100%);
+      border: 2px solid #ffffff;
+      box-shadow: 0 0 20px rgba(226, 232, 240, 0.5);
+    }
+
+    .pedestal-bronze-face {
+      background: linear-gradient(180deg, #fb923c 0%, #ea580c 25%, #c2410c 60%, #7c2d12 100%);
+      box-shadow: 
+        inset 0 2px 4px rgba(255, 255, 255, 0.5),
+        inset 0 -4px 8px rgba(0, 0, 0, 0.4),
+        0 20px 40px -10px rgba(194, 65, 12, 0.35);
+      border-left: 3px solid rgba(255, 255, 255, 0.35);
+      border-right: 3px solid rgba(0, 0, 0, 0.35);
+    }
+    .pedestal-bronze-top {
+      background: radial-gradient(ellipse at center, #fed7aa 0%, #fb923c 60%, #9a3412 100%);
+      border: 2px solid #ffedd5;
+      box-shadow: 0 0 20px rgba(251, 146, 60, 0.5);
+    }
+
+    /* Taç Düşme & Havada Salınım Animasyonu */
+    @keyframes crownDrop {
+      0% {
+        transform: translateY(-90px) scale(1.6) rotate(-15deg);
+        opacity: 0;
+      }
+      50% {
+        transform: translateY(6px) scale(0.95) rotate(4deg);
+        opacity: 1;
+      }
+      75% {
+        transform: translateY(-4px) scale(1.05) rotate(-2deg);
+      }
+      100% {
+        transform: translateY(0) scale(1) rotate(0deg);
+        opacity: 1;
+      }
+    }
+    .animate-crown-drop {
+      animation: crownDrop 0.85s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    /* 3D Sahne Zemin Işık İllüzyonu */
+    .stage-floor-glow {
+      background: radial-gradient(ellipse 70% 35% at 50% 85%, rgba(99, 102, 241, 0.22) 0%, rgba(15, 23, 42, 0.8) 60%, transparent 100%);
+    }
+  </style>
+</head>
+<body class="bg-mesh-light text-slate-800 min-h-screen flex flex-col font-sans antialiased overflow-x-hidden select-none relative">
+
+  <!-- Arka Plan Dekoratif Işık ve Şekil Katmanı -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <!-- Sol Üst Işık Haresi -->
+    <div class="absolute -top-24 -left-24 w-96 h-96 bg-shape-blue rounded-full blur-3xl"></div>
+    <!-- Sağ Üst Işık Haresi -->
+    <div class="absolute -top-20 -right-20 w-96 h-96 bg-shape-amber rounded-full blur-3xl"></div>
+    <!-- Sol Alt Işık Haresi -->
+    <div class="absolute -bottom-24 -left-20 w-96 h-96 bg-shape-red rounded-full blur-3xl"></div>
+    <!-- Sağ Alt Işık Haresi -->
+    <div class="absolute -bottom-24 -right-20 w-96 h-96 bg-shape-green rounded-full blur-3xl"></div>
+
+    <!-- Yüzen Dekoratif Geometrik İkonlar -->
+    <div class="hidden lg:block absolute top-28 left-16 text-rose-300/30 text-4xl animate-float-slow">
+      <i class="fa-solid fa-play -rotate-90"></i>
+    </div>
+    <div class="hidden lg:block absolute top-40 right-20 text-blue-300/30 text-4xl animate-float-medium">
+      <i class="fa-solid fa-square rotate-45"></i>
+    </div>
+    <div class="hidden lg:block absolute bottom-36 left-24 text-amber-300/30 text-4xl animate-float-medium">
+      <i class="fa-solid fa-circle"></i>
+    </div>
+    <div class="hidden lg:block absolute bottom-32 right-28 text-emerald-300/30 text-4xl animate-float-slow">
+      <i class="fa-solid fa-square"></i>
+    </div>
+  </div>
+
+  <!-- Toast Bildirim Alanı -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2.5 max-w-sm pointer-events-none"></div>
+
+  <!-- Dinamik SPA Kök Alanı (Z-Index ile İçerik Önde) -->
+  <div id="app" class="flex-1 flex flex-col w-full h-full relative z-10">
+    <div class="flex-1 flex items-center justify-center p-6">
+      <div class="text-center animate-pulse">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white shadow-premium mb-4 border border-slate-100 text-indigo-600">
+          <i class="fa-solid fa-gamepad text-3xl"></i>
+        </div>
+        <h2 class="text-2xl font-brand font-extrabold text-slate-800">QuizLem</h2>
+        <p class="text-xs font-semibold text-slate-400 mt-1 uppercase tracking-wider">Yükleniyor...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ana JavaScript Uygulama Mantığı -->
+  <script src="app.js?v=2.5.7"></script>
+</body>
+</html>

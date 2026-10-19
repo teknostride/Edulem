@@ -1,0 +1,41 @@
+{
+    "cid": 10,
+    "course_averages": [
+        {
+            "course_id": 2,
+            "course_name": "Fen Bilgisi",
+            "average_net": 11.28,
+            "count": 23
+        },
+        {
+            "course_id": 3,
+            "course_name": "T\u00fcrk\u00e7e",
+            "average_net": 10.76,
+            "count": 22
+        },
+        {
+            "course_id": 1,
+            "course_name": "Matematik",
+            "average_net": 7.71,
+            "count": 23
+        },
+        {
+            "course_id": 6,
+            "course_name": "\u0130ngilizce",
+            "average_net": 4.7,
+            "count": 22
+        },
+        {
+            "course_id": 5,
+            "course_name": "Din K\u00fclt\u00fcr\u00fc",
+            "average_net": 1.89,
+            "count": 22
+        },
+        {
+            "course_id": 4,
+            "course_name": "\u0130nk\u0131lap",
+            "average_net": 1.17,
+            "count": 22
+        }
+    ]
+}

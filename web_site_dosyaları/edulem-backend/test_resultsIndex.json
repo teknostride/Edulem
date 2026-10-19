@@ -1,0 +1,28 @@
+{
+    "course_headers": [
+        {
+            "course_id": 3,
+            "course_name": "T\u00fcrk\u00e7e"
+        },
+        {
+            "course_id": 5,
+            "course_name": "Din K\u00fclt\u00fcr\u00fc"
+        },
+        {
+            "course_id": 1,
+            "course_name": "Matematik"
+        },
+        {
+            "course_id": 2,
+            "course_name": "Fen Bilgisi"
+        },
+        {
+            "course_id": 6,
+            "course_name": "\u0130ngilizce"
+        },
+        {
+            "course_id": 4,
+            "course_name": "\u0130nk\u0131lap"
+        }
+    ]
+}

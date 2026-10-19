@@ -1,0 +1,15 @@
+Total in session: 45
+
+Example entry:
+Array
+(
+    [student_id] => 4062
+    [total_net] => 73
+    [total_point] => 250
+    [exam_count] => 2
+    [rank] => 1
+    [student_name] => ELİF ESMER
+    [student_no] => 166
+    [classroom_name] => 7-A
+)
+

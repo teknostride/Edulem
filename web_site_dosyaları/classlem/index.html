@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ClassLem - Sınıf Yönetimi & Öğrenci Puanlama</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0ea5e9">
+  <link rel="stylesheet" href="style.css">
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand" id="brandHomeBtn">
+        <div class="brand-icon">
+          <img src="logo.png" alt="ClassLem" class="brand-logo-img">
+        </div>
+        <div class="brand-info">
+          <h1>ClassLem <span class="brand-badge">PRO</span></h1>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <!-- Edulem Canlı Veritabanı Durumu -->
+        <div class="edulem-status-badge" id="edulemStatusBadge" title="Edulem Veritabanı Bağlantısı">
+          <span class="status-pulse-dot"></span>
+          <span class="edulem-badge-text" id="edulemStatusText">Edulem Bağlı</span>
+        </div>
+
+        <!-- Edulem'den Yenile Butonu -->
+        <button class="btn btn-secondary" id="btnSyncEdulem" title="Edulem'den Sınıf ve Öğrencileri Yenile">
+          <i data-lucide="refresh-cw" id="syncIcon"></i>
+          <span class="btn-text">Edulem'den Yenile</span>
+        </button>
+
+        <button class="btn btn-secondary" id="navClassesBtn" title="Sınıflarım">
+          <i data-lucide="layout-grid"></i>
+          <span class="btn-text">Sınıflarım</span>
+        </button>
+
+        <!-- İdare ve Rehberlik Rapor Butonu (Yetkili rollere özel) -->
+        <button class="btn btn-primary" id="btnExecutiveReport" style="display: none; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border: none; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);" title="Rehberlik & İdare Raporları">
+          <i data-lucide="bar-chart-3"></i>
+          <span class="btn-text">Rehberlik & Raporlar</span>
+        </button>
+
+        <button class="btn-icon" id="soundToggleBtn" title="Ses Açık/Kapalı">
+          <i data-lucide="volume-2" id="soundIcon"></i>
+        </button>
+
+        <button class="btn-icon" id="backupModalBtn" title="Veri Yedekleme / Yükleme">
+          <i data-lucide="database"></i>
+        </button>
+
+        <button class="btn-icon" id="fullscreenToggleBtn" title="Tam Ekran">
+          <i data-lucide="maximize" id="fullscreenIcon"></i>
+        </button>
+
+        <!-- Öğretmen / Kullanıcı Profili ve Çıkış Butonu -->
+        <div class="user-nav-profile" id="userNavProfile" style="display: none;">
+          <div class="user-avatar-badge" id="navUserAvatar">👨‍🏫</div>
+          <div class="user-info-text">
+            <span class="nav-user-name" id="navUserName">Öğretmen</span>
+            <span class="nav-user-role" id="navUserRole">Öğretmen</span>
+          </div>
+          <button class="btn-logout" id="btnLogout" title="Güvenli Çıkış Yap">
+            <i data-lucide="log-out" style="width: 13px; height: 13px;"></i>
+            <span>Çıkış</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Wrapper -->
+  <main class="main-wrapper">
+
+    <!-- VIEW 0: LOGIN VIEW (Edulem Öğretmen Girişi) -->
+    <section id="viewLogin" class="login-view-section" style="display: none;">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="login-brand-badge">
+            <img src="logo.png" alt="ClassLem">
+          </div>
+          <h2 class="login-title">Class<span>Lem</span></h2>
+          <p class="login-subtitle">Edulem Öğretmen, İdare & Kurucu Girişi</p>
+        </div>
+
+        <div class="login-alert" id="loginAlertBox">
+          <i data-lucide="alert-circle" style="width: 18px; height: 18px; flex-shrink: 0;"></i>
+          <span id="loginAlertMsg">Hata mesajı</span>
+        </div>
+
+        <form id="formLogin" class="login-form" onsubmit="return false;">
+          <div class="login-field">
+            <label for="inputLoginTc">T.C. Kimlik Numarası</label>
+            <div class="login-input-wrap">
+              <i data-lucide="credit-card" class="field-icon"></i>
+              <input type="text" id="inputLoginTc" inputmode="numeric" maxlength="11" placeholder="11 Haneli T.C. Kimlik No" autocomplete="username" required>
+            </div>
+          </div>
+
+          <div class="login-field">
+            <label for="inputLoginPassword">Şifre</label>
+            <div class="login-input-wrap">
+              <i data-lucide="lock" class="field-icon"></i>
+              <input type="password" id="inputLoginPassword" placeholder="Edulem şifreniz" autocomplete="current-password" required>
+              <button type="button" class="login-toggle-pw-btn" id="btnToggleLoginPw" title="Şifreyi Göster/Gizle">
+                <i data-lucide="eye" id="togglePwIcon" style="width: 16px; height: 16px;"></i>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-login-submit" id="btnLoginSubmit">
+            <i data-lucide="log-in" id="loginBtnIcon" style="width: 18px; height: 18px;"></i>
+            <span id="loginBtnText">Giriş Yap</span>
+          </button>
+        </form>
+
+        <div class="login-footer-info">
+          <i data-lucide="shield-check" style="width: 15px; height: 15px; color: #10b981;"></i>
+          <span>Edulem veritabanı ile güvenli ve anlık kimlik doğrulama.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 1: DASHBOARD (Sınıflar Listesi) -->
+    <section id="viewDashboard" class="view-section">
+      <div class="view-header">
+        <div class="view-title-group">
+          <h2><i data-lucide="school" style="color: var(--primary);"></i> Sınıflarım <span class="badge-season" id="currentSeasonBadge">2026-2027</span></h2>
+          <p class="view-subtitle">Edulem veritabanından dinamik olarak çekilen sınıflar ve öğrenciler.</p>
+        </div>
+        <div class="view-header-actions" style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+          <select id="seasonSelect" class="season-select" title="Eğitim-Öğretim Dönemi Seçin">
+            <!-- Dinamik doldurulacak -->
+          </select>
+          <button class="btn btn-secondary" id="btnExecutiveReportDashboard" style="display: none; border-color: #c7d2fe; color: #4338ca;" title="Rehberlik & İdare Raporları">
+            <i data-lucide="bar-chart-2"></i>
+            <span>Rehberlik & Raporlar</span>
+          </button>
+          <button class="btn btn-primary" id="btnOpenNewClassModal" style="display: none !important;">
+            <i data-lucide="plus-circle"></i>
+            <span>Yeni Sınıf Oluştur</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Kurucu & İdareci Özel Rapor Bannerı -->
+      <div class="executive-banner-card" id="executiveBannerCard" style="display: none; background: linear-gradient(135deg, #3730a3 0%, #4f46e5 50%, #7c3aed 100%); color: white; border-radius: 16px; padding: 1.25rem 1.6rem; margin-bottom: 1.35rem; box-shadow: 0 10px 25px rgba(79, 70, 229, 0.28); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(255,255,255,0.22); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; font-size: 1.85rem; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            📊
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+              <h3 style="font-size: 1.25rem; font-weight: 800; margin: 0; color: #ffffff; letter-spacing: -0.01em;">Okul Geneli Rehberlik & İdare Raporları</h3>
+              <span style="background: #fbbf24; color: #78350f; padding: 3px 9px; border-radius: 9999px; font-size: 0.72rem; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase;">Kurucu & İdare Paneli</span>
+            </div>
+            <p style="font-size: 0.88rem; margin: 0.35rem 0 0 0; color: #e0e7ff; opacity: 0.95; line-height: 1.4;">
+              Tüm okul istatistikleri, en çok eksi puan alan öğrenciler, rehberlik takip listesi, sınıf sıralamaları ve aylık puan sıfırlama.
+            </p>
+          </div>
+        </div>
+        <button class="btn" id="btnExecutiveReportBanner" style="background: #ffffff; color: #3730a3; font-weight: 800; font-size: 0.95rem; padding: 0.8rem 1.65rem; border-radius: 12px; border: none; box-shadow: 0 6px 16px rgba(0,0,0,0.18); cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: transform 0.15s, box-shadow 0.15s;">
+          <i data-lucide="bar-chart-3" style="width: 18px; height: 18px; color: #4f46e5;"></i>
+          <span>Detaylı Raporları Aç</span>
+        </button>
+      </div>
+
+      <!-- Kademe Filtreleme Sekmeleri (İlkokul, Ortaokul, Lise, Anaokulu) -->
+      <div class="grade-filter-tabs" id="gradeFilterTabs">
+        <button class="grade-tab-btn active" data-grade="all">
+          <i data-lucide="layers" style="width: 15px;"></i> Tüm Kademeler (<span id="countGradeAll">0</span>)
+        </button>
+        <button class="grade-tab-btn" data-grade="ilkokul">
+          <span>🎒</span> İlkokul (<span id="countGradeIlkokul">0</span>)
+        </button>
+        <button class="grade-tab-btn" data-grade="ortaokul">
+          <span>🚀</span> Ortaokul (<span id="countGradeOrtaokul">0</span>)
+        </button>
+        <button class="grade-tab-btn" data-grade="lise">
+          <span>🎓</span> Lise (<span id="countGradeLise">0</span>)
+        </button>
+        <button class="grade-tab-btn" data-grade="anaokulu">
+          <span>🐣</span> Anaokulu (<span id="countGradeAnaokulu">0</span>)
+        </button>
+      </div>
+
+      <div class="classes-container" id="classesContainer">
+        <!-- Dinamik olarak app.js tarafından doldurulacak -->
+      </div>
+    </section>
+
+    <!-- VIEW 2: CLASSROOM VIEW (Sınıf İçi ve Öğrenciler) -->
+    <section id="viewClassroom" class="view-section" style="display: none;">
+      <!-- Sınıf Başlığı ve Hızlı Araçlar -->
+      <div class="class-hero">
+        <div class="class-details">
+          <button class="btn-icon" id="btnBackToDashboard" title="Sınıflara Dön">
+            <i data-lucide="arrow-left"></i>
+          </button>
+          <div class="class-avatar-badge" id="classHeroIcon">🏫</div>
+          <div class="class-info">
+            <h3 id="classHeroTitle">4-B Yıldızlar Sınıfı</h3>
+            <div class="class-meta">
+              <span class="class-meta-item" id="classHeroGrade">4. Sınıf</span>
+              <span>•</span>
+              <span class="class-meta-item"><i data-lucide="users" style="width: 14px;"></i> <span id="classHeroCount">0</span> Öğrenci</span>
+              <span>•</span>
+              <span class="class-meta-item class-total-score"><i data-lucide="award" style="width: 14px;"></i> <span id="classHeroTotalScore">0</span> Toplam Puan</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="class-quick-tools">
+          <button class="btn btn-tool-purple" id="btnRandomPicker">
+            <i data-lucide="shuffle"></i>
+            <span>Rastgele Seç</span>
+          </button>
+          <button class="btn btn-tool-amber" id="btnOpenTimer">
+            <i data-lucide="timer"></i>
+            <span>Zamanlayıcı</span>
+          </button>
+          <button class="btn btn-tool-blue" id="btnOpenHistory">
+            <i data-lucide="history"></i>
+            <span>Sınıf Geçmişi</span>
+          </button>
+          <button class="btn btn-primary" id="btnExecutiveReportClassroom" style="display: none; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border: none; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35); font-weight: 700;" title="Okul Geneli Rehberlik & İdare Raporları">
+            <i data-lucide="bar-chart-3"></i>
+            <span>Okul Raporları</span>
+          </button>
+          <button class="btn btn-tool-teal" id="btnManageSkills">
+            <i data-lucide="sliders"></i>
+            <span>Beceriler</span>
+          </button>
+          <button class="btn btn-tool-green" id="btnOpenAddStudent" style="display: none !important;">
+            <i data-lucide="user-plus"></i>
+            <span>Öğrenci Ekle</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- İlkokul & Anasınıfı Neşeli Motivasyon Çubuğu -->
+      <div class="fun-motivation-strip">
+        <div class="motivation-item">
+          <span style="font-size: 1.3rem;">🌈</span>
+          <span>Birlikte Öğreniyor, Yıldızları Topluyoruz!</span>
+        </div>
+        <div class="motivation-badges-group">
+          <div class="motivation-badge">
+            <i data-lucide="award" style="width: 15px;"></i>
+            <span>Toplam Sınıf Puanı: <strong id="stripTotalScore">0</strong></span>
+          </div>
+          <div class="motivation-badge star-badge">
+            <span>⭐ Başarı & Nezaket: <strong id="stripPositiveRatio">%100</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sınıf İçi İki Kolonlu Düzen: Sol (Öğrenciler / Gruplar) & Sağ (Gürültü Ölçer) -->
+      <div class="classroom-layout">
+        <div class="classroom-main-col">
+          <!-- Alt Sekmeler: Öğrenciler / Gruplar -->
+          <div class="sub-tabs">
+            <button class="tab-btn active" id="tabStudentsBtn" data-tab="students">
+              <i data-lucide="smile"></i>
+              <span>Öğrenciler (<span id="tabStudentCount">0</span>)</span>
+            </button>
+            <button class="tab-btn" id="tabGroupsBtn" data-tab="groups">
+              <i data-lucide="users"></i>
+              <span>Gruplar / Masalar (<span id="tabGroupCount">0</span>)</span>
+            </button>
+            <div style="margin-left: auto; display: flex; gap: 0.5rem; align-items: center;">
+              <button class="btn btn-secondary" id="btnToggleSort" style="font-size: 0.82rem; padding: 0.4rem 0.8rem;" title="Sıralama Ölçütünü Değiştir">
+                <i data-lucide="arrow-down-narrow-wide" id="sortIcon"></i>
+                <span id="sortToggleText">Puana Göre (Liderlik)</span>
+              </button>
+              <button class="btn btn-secondary" id="btnToggleMultiSelect" style="font-size: 0.82rem; padding: 0.4rem 0.8rem;">
+                <i data-lucide="check-square"></i>
+                <span id="multiSelectToggleText">Çoklu Seçim</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Tab Content: Öğrenciler Izgarası -->
+          <div id="tabContentStudents">
+            <!-- IŞIKLI ŞAMPİYONLAR PODYUMU & ALTIN TAHT -->
+            <section class="classroom-podium-section" id="classroomPodium" aria-label="Sınıf Podyumu & Liderler Kürsüsü">
+              <!-- Dinamik podyum app.js renderPodium() ile doldurulacak -->
+            </section>
+
+            <!-- 🐟 SINIF AKVARYUMu - Öğrenci Balıkları -->
+            <div class="aquarium-section" id="classAquarium" aria-label="Sınıf Akvaryumu">
+              <div class="aquarium-header">
+                <span class="aquarium-icon">🐟</span>
+                <span class="aquarium-title">Sınıf Akvaryumu</span>
+                <span class="aquarium-subtitle">Her öğrenci kendi karakterine göre yüzüyor!</span>
+              </div>
+              <div class="aquarium-canvas-wrapper">
+                <canvas id="aquariumCanvas" class="aquarium-canvas"></canvas>
+                <div class="aquarium-bubbles" id="aquariumBubbles"></div>
+                <div class="fish-legend" id="fishLegend">
+                  <span class="legend-item speedster">⚡ Hızlı</span>
+                  <span class="legend-item lazy">🐢 Yavaş</span>
+                  <span class="legend-item dasher">💨 Ani Hızlanan</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Öğrenci Listesi Başlığı & Izgara -->
+            <div class="students-section-header">
+              <div class="section-title-wrap">
+                <span class="section-title-icon">🎖️</span>
+                <h3 class="students-section-title">Sınıf Öğrencileri Sıralaması</h3>
+              </div>
+              <span class="students-section-badge" id="studentsSectionBadge">Puana Göre Sıralı</span>
+            </div>
+
+            <div class="students-grid" id="studentsGrid">
+              <!-- Dinamik öğrenci kartları app.js ile eklenecek -->
+            </div>
+          </div>
+
+          <!-- Tab Content: Gruplar Izgarası -->
+          <div id="tabContentGroups" style="display: none;">
+            <div class="view-header" style="margin-bottom: 1rem;">
+              <div>
+                <h4 style="font-size: 1.1rem; font-weight: 700;">Sınıf Çalışma Grupları & Masalar</h4>
+                <p class="view-subtitle">Gruplara toplu olarak davranış ve etkinlik puanı verin.</p>
+              </div>
+              <button class="btn btn-primary" id="btnOpenNewGroupModal">
+                <i data-lucide="plus"></i> Yeni Grup Oluştur
+              </button>
+            </div>
+            <div class="groups-grid" id="groupsGrid">
+              <!-- Gruplar app.js ile eklenecek -->
+            </div>
+          </div>
+        </div>
+
+        <!-- SAĞ PANEL: OTOMATİK GÜRÜLTÜ ÖLÇER (NOISE METER WIDGET) -->
+        <aside class="noise-meter-sidebar" id="noiseMeterSidebar">
+          <div class="noise-card" id="noiseCard">
+            <div class="noise-card-header">
+              <div class="noise-header-left">
+                <div class="noise-icon-badge" id="noiseIconBadge">
+                  <i data-lucide="volume-2" id="noiseVolumeIcon"></i>
+                </div>
+                <div>
+                  <h4 class="noise-card-title">Gürültü Ölçer</h4>
+                  <span class="noise-source-tag" id="noiseSourceTag">🎙️ Canlı Mikrofon</span>
+                </div>
+              </div>
+              <button class="btn-icon" id="btnOpenNoiseSettings" title="Gürültü Ayarları" style="width: 32px; height: 32px;">
+                <i data-lucide="settings-2" style="width: 15px;"></i>
+              </button>
+            </div>
+
+            <!-- Sayısal Değer & Durum Rozeti -->
+            <div class="noise-display-row">
+              <div class="noise-number-box">
+                <span class="noise-number-val" id="noiseNumberVal">0</span>
+                <span class="noise-number-unit">/ 100</span>
+              </div>
+              <div class="noise-status-badge status-calm" id="noiseStatusBadge">
+                🟢 Sessiz
+              </div>
+            </div>
+
+            <!-- Gürültü Seviye Çubuğu (Vertical Level Gauge) -->
+            <div class="noise-meter-track" id="noiseMeterTrack">
+              <div class="noise-threshold-marker" id="noiseThresholdMarker" style="bottom: 80%;">
+                <span class="noise-marker-label">Ceza Eşiği: <strong id="markerThresholdVal">80</strong></span>
+              </div>
+              <div class="noise-meter-bar" id="noiseMeterBar" style="height: 5%;"></div>
+            </div>
+
+            <!-- Yüksek Gürültü Ceza Uyarısı Paneli -->
+            <div class="noise-warning-panel" id="noiseWarningPanel" style="display: none;">
+              <div class="warning-title">⚠️ YÜKSEK GÜRÜLTÜ!</div>
+              <div class="penalty-timer-track">
+                <div class="penalty-timer-bar" id="penaltyTimerBar" style="width: 0%;"></div>
+              </div>
+              <div class="warning-desc" id="penaltyCountdownLabel">2 sn içinde herkesden 1 puan kesilecek!</div>
+            </div>
+
+            <!-- Ceza Sonrası Cooldown Bilgilendirme -->
+            <div class="noise-cooldown-panel" id="noiseCooldownPanel" style="display: none;">
+              <span>⏳ Ceza uygulandı (Bekleme süresi)</span>
+            </div>
+
+            <!-- Ayar Özeti -->
+            <div class="noise-quick-info">
+              <div class="noise-info-row">
+                <span>Otomatik Puan Kırma:</span>
+                <strong id="noiseAutoPenaltyStatus" style="color: var(--positive-dark);">Açık (-1 Puan)</strong>
+              </div>
+            </div>
+
+            <!-- Hızlı Düğmeler -->
+            <div class="noise-card-actions">
+              <button class="btn btn-secondary btn-sm" id="btnToggleNoisePause" style="flex: 1; font-size: 0.8rem; padding: 0.4rem 0.6rem;">
+                <i data-lucide="pause" id="noisePauseIcon" style="width: 14px;"></i>
+                <span id="noisePauseText">Duraklat</span>
+              </button>
+              <button class="btn btn-secondary btn-sm" id="btnToggleNoiseMode" title="Mikrofon / Simülasyon Geçişi" style="font-size: 0.8rem; padding: 0.4rem 0.6rem;">
+                <i data-lucide="sliders" style="width: 14px;"></i>
+                <span id="noiseModeBtnText">Simülasyon</span>
+              </button>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- FLOATING MULTI-ACTION BAR (Çoklu öğrenci seçildiğinde beliren çubuk) -->
+  <div class="multi-action-bar" id="multiActionBar">
+    <div class="multi-count">
+      <span id="selectedCountNumber">0</span> öğrenci seçildi
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <button class="btn btn-positive" id="btnMultiAward">
+        <i data-lucide="award"></i> Puan Ver
+      </button>
+      <button class="btn btn-secondary" id="btnMultiClear" style="background: rgba(255,255,255,0.2); color: white; border: none;">
+        İptal
+      </button>
+    </div>
+  </div>
+
+  <!-- MOBILE BOTTOM NAVIGATION BAR -->
+  <nav class="mobile-bottom-nav">
+    <button class="mobile-nav-item active" id="mobNavClasses">
+      <i data-lucide="layout-grid"></i>
+      <span>Sınıflar</span>
+    </button>
+    <button class="mobile-nav-item" id="mobNavStudents">
+      <i data-lucide="smile"></i>
+      <span>Sınıf İçi</span>
+    </button>
+    <button class="mobile-nav-item" id="mobNavRandom">
+      <i data-lucide="shuffle"></i>
+      <span>Rastgele</span>
+    </button>
+    <button class="mobile-nav-item" id="mobNavTimer">
+      <i data-lucide="timer"></i>
+      <span>Süre</span>
+    </button>
+    <button class="mobile-nav-item" id="mobNavReport">
+      <i data-lucide="history"></i>
+      <span>Rapor</span>
+    </button>
+  </nav>
+
+  <!-- ==================== MODALLER ==================== -->
+
+  <!-- 1. BECERİ & PUAN VERME MODALI (Skill Modal) -->
+  <div class="modal-overlay" id="skillModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div class="modal-header-title">
+          <div class="group-mini-avatar" id="skillModalTargetAvatar" style="width: 38px; height: 38px;"></div>
+          <div>
+            <h3 id="skillModalTargetName">Puan Ver</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);" id="skillModalSubTitle">Bir beceri veya davranış seçin</p>
+          </div>
+        </div>
+        <button class="modal-close" data-close="skillModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Pozitif / Geliştirilmeli Sekmeleri -->
+        <div class="skills-tab-switch">
+          <button class="skills-tab-btn active positive-tab" id="skillTabPositive">
+            <i data-lucide="thumbs-up"></i>
+            <span>Pozitif Beceriler (+)</span>
+          </button>
+          <button class="skills-tab-btn" id="skillTabNeedsWork">
+            <i data-lucide="alert-circle"></i>
+            <span>Geliştirilmeli (-)</span>
+          </button>
+        </div>
+
+        <div class="skills-grid" id="skillsGridList">
+          <!-- Beceriler JS ile yüklenecek -->
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+        <div id="studentManageActions" style="display: none; gap: 0.4rem;">
+          <button class="btn btn-secondary" id="btnChangeStudentAvatar" title="Yeni Canavar Avatarı Ata" style="font-size: 0.8rem; padding: 0.4rem 0.65rem;">
+            <i data-lucide="refresh-cw"></i> Yeni Avatar
+          </button>
+          <button class="btn btn-secondary" id="btnEditStudentModalBtn" title="Öğrenci Adını Düzenle" style="font-size: 0.8rem; padding: 0.4rem 0.65rem;">
+            <i data-lucide="edit-2"></i> Düzenle
+          </button>
+          <button class="btn btn-danger" id="btnDeleteStudentModalBtn" title="Öğrenciyi Sil" style="display: none !important; font-size: 0.8rem; padding: 0.4rem 0.65rem;">
+            <i data-lucide="trash-2"></i> Sil
+          </button>
+        </div>
+        <div style="display: flex; gap: 0.5rem; margin-left: auto;">
+          <button class="btn btn-secondary" id="btnEditSkillsShortcut">
+            <i data-lucide="edit-3"></i> Becerileri Düzenle
+          </button>
+          <button class="btn btn-secondary" data-close="skillModal">Kapat</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. BECERİ DÜZENLEME & EKLEME MODALI (Skills Editor Modal) -->
+  <div class="modal-overlay" id="editSkillsModal">
+    <div class="modal-container" style="max-width: 650px;">
+      <div class="modal-header">
+        <div class="modal-header-title">
+          <i data-lucide="sliders" style="color: var(--primary);"></i>
+          <h3>Becerileri & Davranışları Yönet</h3>
+        </div>
+        <button class="modal-close" data-close="editSkillsModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Yeni Beceri Ekle Formu -->
+        <form id="newSkillForm" style="background: #f8fafc; padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+          <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.75rem;">+ Yeni Beceri Ekle</h4>
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.75rem;">
+            <div>
+              <label class="form-label" style="font-size: 0.8rem;">Beceri Adı</label>
+              <input type="text" id="newSkillTitle" class="form-input" placeholder="Örn: Yardımlaşma" required>
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 0.8rem;">Tür</label>
+              <select id="newSkillType" class="form-select">
+                <option value="positive">Pozitif (+)</option>
+                <option value="needs-work">Geliştirilmeli (-)</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 0.8rem;">Puan</label>
+              <select id="newSkillPoints" class="form-select">
+                <option value="1">+1</option>
+                <option value="2">+2</option>
+                <option value="3">+3</option>
+                <option value="4">+4</option>
+                <option value="5">+5</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <label class="form-label" style="font-size: 0.8rem; margin-bottom: 0;">İkon:</label>
+              <select id="newSkillIcon" class="form-select" style="width: auto; padding: 0.4rem 0.6rem;">
+                <option value="🌟">🌟 Yıldız</option>
+                <option value="🤝">🤝 Yardım</option>
+                <option value="🙋">🙋 Parmak Kaldırma</option>
+                <option value="📚">📚 Ödev/Ders</option>
+                <option value="🎨">🎨 Yaratıcılık</option>
+                <option value="💡">💡 Fikir</option>
+                <option value="❤️">❤️ Nezaket</option>
+                <option value="🏆">🏆 Başarı</option>
+                <option value="⏰">⏰ Zaman</option>
+                <option value="🤫">🤫 Sessizlik</option>
+                <option value="⚠️">⚠️ Dikkat</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="padding: 0.45rem 1rem; font-size: 0.85rem;">
+              <i data-lucide="plus"></i> Beceriyi Kaydet
+            </button>
+          </div>
+        </form>
+
+        <!-- Mevcut Beceriler Listesi -->
+        <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem;">Mevcut Beceriler</h4>
+        <div id="editableSkillsList" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 260px; overflow-y: auto;">
+          <!-- JS tarafından listelenecek -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="editSkillsModal">Tamam</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. ÖĞRENCİ EKLEME MODALI (Tek Tek / Toplu) -->
+  <div class="modal-overlay" id="addStudentModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div class="modal-header-title">
+          <i data-lucide="user-plus" style="color: var(--primary);"></i>
+          <h3>Sınıfa Öğrenci Ekle</h3>
+        </div>
+        <button class="modal-close" data-close="addStudentModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="edulem-notice-box">
+          <i data-lucide="info"></i>
+          <span><strong>Edulem Senkronizasyonu:</strong> Öğrenciler doğrudan Edulem veritabanından dinamik olarak çekilir. Edulem'e öğrenci eklendiğinde veya silindiğinde buraya anında yansır.</span>
+        </div>
+        <div class="skills-tab-switch">
+          <button class="skills-tab-btn active positive-tab" id="tabAddSingleStudent">
+            <i data-lucide="user"></i> Tek Tek Ekle
+          </button>
+          <button class="skills-tab-btn" id="tabAddBulkStudents">
+            <i data-lucide="file-text"></i> Toplu Liste Yapıştır
+          </button>
+        </div>
+
+        <!-- Tek Tek Ekleme Bölümü -->
+        <form id="formAddSingleStudent">
+          <div class="form-group">
+            <label class="form-label">Öğrenci Adı ve Soyadı</label>
+            <input type="text" id="singleStudentName" class="form-input" placeholder="Örn: Zeynep Kaya" required>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            <i data-lucide="user-plus"></i> Öğrenciyi Ekle
+          </button>
+        </form>
+
+        <!-- Toplu Ekleme Bölümü -->
+        <form id="formAddBulkStudents" style="display: none;">
+          <div class="form-group">
+            <label class="form-label">Öğrenci İsimleri (Her satıra bir isim)</label>
+            <textarea id="bulkStudentsText" class="form-textarea" rows="6" placeholder="Ali Demir&#10;Ayşe Yılmaz&#10;Caner Kurt&#10;Elif Şahin"></textarea>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem;">Excel veya Word'den kopyalayıp doğrudan buraya yapıştırabilirsiniz.</p>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            <i data-lucide="users"></i> Toplu Öğrencileri Ekle
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. YENİ / DÜZENLE SINIF MODALI -->
+  <div class="modal-overlay" id="classModal">
+    <div class="modal-container" style="max-width: 480px;">
+      <div class="modal-header">
+        <div class="modal-header-title">
+          <i data-lucide="school" style="color: var(--primary);"></i>
+          <h3 id="classModalTitle">Yeni Sınıf Oluştur</h3>
+        </div>
+        <button class="modal-close" data-close="classModal">&times;</button>
+      </div>
+      <form id="formClassSave">
+        <input type="hidden" id="editClassId" value="">
+        <div class="modal-body">
+          <div class="edulem-notice-box">
+            <i data-lucide="info"></i>
+            <span><strong>Edulem Veritabanı:</strong> Tüm sınıflarınız Edulem sisteminden otomatik aktarılmaktadır. Edulem'de açılan veya güncellenen sınıflar buraya anında yansır.</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sınıf Adı</label>
+            <input type="text" id="classNameInput" class="form-input" placeholder="Örn: 4-B Yıldızlar Sınıfı" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Kademe / Şube</label>
+            <input type="text" id="classGradeInput" class="form-input" placeholder="Örn: 4. Sınıf" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sınıf Simgesi</label>
+            <select id="classIconInput" class="form-select">
+              <option value="🏫">🏫 Okul</option>
+              <option value="⭐">⭐ Yıldız</option>
+              <option value="🚀">🚀 Roket</option>
+              <option value="🦁">🦁 Aslan</option>
+              <option value="🐬">🐬 Yunus</option>
+              <option value="🌱">🌱 Fidan</option>
+              <option value="🌈">🌈 Gökkuşağı</option>
+              <option value="🎯">🎯 Hedef</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="classModal">İptal</button>
+          <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. RASTGELE ÖĞRENCİ SEÇİCİ MODALI (Random Student Picker) -->
+  <div class="modal-overlay" id="randomPickerModal">
+    <div class="modal-container" style="max-width: 450px;">
+      <div class="modal-header">
+        <div class="modal-header-title">
+          <i data-lucide="shuffle" style="color: var(--primary);"></i>
+          <h3>Rastgele Öğrenci Seçici</h3>
+        </div>
+        <button class="modal-close" data-close="randomPickerModal">&times;</button>
+      </div>
+      <div class="modal-body random-picker-body">
+        <div class="picker-avatar-box" id="pickerAvatarBox">
+          <!-- Dinamik Avatar -->
+        </div>
+        <div class="picker-student-name" id="pickerStudentName">Seçiliyor...</div>
+        <div class="picker-instruction">Günün şanslı öğrencisi seçildi!</div>
+        
+        <div style="display: flex; gap: 0.75rem; width: 100%; justify-content: center;">
+          <button class="btn btn-secondary" id="btnPickAgain">
+            <i data-lucide="rotate-ccw"></i> Yeniden Seç
+          </button>
+          <button class="btn btn-positive" id="btnAwardPickedStudent">
+            <i data-lucide="award"></i> Puan Ver
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. ZAMANLAYICI & KRONOMETRE MODALI (Timer) -->
+  <div class="modal-overlay" id="timerModal">
+    <div class="modal-container" style="max-width: 540px;">
+      <div class="modal-header">
+        <div class="modal-header-title">
+          <i data-lucide="timer" style="color: var(--primary);"></i>
+          <h3>Sınıf Zamanlayıcısı & Etkinlikler</h3>
+        </div>
+        <button class="modal-close" data-close="timerModal">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <!-- Mod Seçimi: Geri Sayım / Kronometre -->
+        <div class="skills-tab-switch" style="max-width: 280px; margin: 0 auto 1.25rem;">
+          <button class="skills-tab-btn active positive-tab" id="tabCountdownMode">Geri Sayım</button>
+          <button class="skills-tab-btn" id="tabStopwatchMode">Kronometre</button>
+        </div>
+
+        <!-- Etkinlik Hazır Şablonları -->
+        <div id="timerActivitySection">
+          <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px;">
+            Hızlı Etkinlik Seçin
+          </label>
+          <div class="activity-presets-grid" id="activityPresetsGrid">
+            <button class="activity-preset-btn active" data-sec="900" data-title="Sessiz Okuma" data-icon="📖">
+              <span class="act-emoji">📖</span>
+              <span class="act-name">Sessiz Okuma</span>
+              <span class="act-time">15 dk</span>
+            </button>
+            <button class="activity-preset-btn" data-sec="600" data-title="Grup Çalışması" data-icon="🧩">
+              <span class="act-emoji">🧩</span>
+              <span class="act-name">Grup Çalışması</span>
+              <span class="act-time">10 dk</span>
+            </button>
+            <button class="activity-preset-btn" data-sec="300" data-title="Mini Test" data-icon="⚡">
+              <span class="act-emoji">⚡</span>
+              <span class="act-name">Mini Test</span>
+              <span class="act-time">5 dk</span>
+            </button>
+            <button class="activity-preset-btn" data-sec="180" data-title="Toplanma Vakti" data-icon="🧹">
+              <span class="act-emoji">🧹</span>
+              <span class="act-name">Toplanma</span>
+              <span class="act-time">3 dk</span>
+            </button>
+            <button class="activity-preset-btn" data-sec="120" data-title="Mola & Dinlenme" data-icon="🏃">
+              <span class="act-emoji">🏃</span>
+              <span class="act-name">Mola</span>
+              <span class="act-time">2 dk</span>
+            </button>
+            <button class="activity-preset-btn" data-sec="60" data-title="Hızlı Düşünme" data-icon="💡">
+              <span class="act-emoji">💡</span>
+              <span class="act-name">Hızlı Tur</span>
+              <span class="act-time">1 dk</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Aktif Etkinlik Rozeti & Başlık Düzenleme -->
+        <div class="timer-active-banner" id="timerActiveBanner">
+          <span class="timer-banner-icon" id="timerActiveIcon">📖</span>
+          <input type="text" id="timerCustomTitleInput" class="timer-title-input" value="Sessiz Okuma" placeholder="Etkinlik Adı..." maxlength="30" />
+        </div>
+
+        <!-- Sayaç Ekranı -->
+        <div class="timer-display-wrap">
+          <button class="btn-time-adjust" id="btnTimerSub1m" title="1 Dakika Azalt">-1 dk</button>
+          <div class="timer-display" id="timerDisplay">15:00</div>
+          <button class="btn-time-adjust" id="btnTimerAdd1m" title="1 Dakika Ekle">+1 dk</button>
+        </div>
+
+        <!-- İnce Hızlı Süre Butonları -->
+        <div class="timer-presets" id="timerPresets">
+          <button class="preset-btn" data-sec="30">+30 sn</button>
+          <button class="preset-btn" data-sec="60">+1 dk</button>
+          <button class="preset-btn" data-sec="180">+3 dk</button>
+          <button class="preset-btn" data-sec="300">+5 dk</button>
+          <button class="preset-btn" data-sec="600">+10 dk</button>
+        </div>
+
+        <!-- Ana Kontrol Butonları -->
+        <div class="timer-actions-row">
+          <button class="btn btn-primary" id="btnTimerStartPause">
+            <i data-lucide="play" id="timerPlayIcon"></i> <span id="timerPlayText">Başlat</span>
+          </button>
+          <button class="btn btn-secondary" id="btnTimerReset">
+            <i data-lucide="rotate-ccw"></i> Sıfırla
+          </button>
+        </div>
+
+        <!-- Kenarda Göster & Tam Ekran Araçları -->
+        <div class="timer-view-options">
+          <button class="btn-view-option" id="btnTimerMinimize" title="Pencereyi kapatıp sayacı sağ alt köşede canlı tutar">
+            <i data-lucide="minimize-2"></i>
+            <span>Kenarda Göster</span>
+          </button>
+          <button class="btn-view-option btn-view-fullscreen" id="btnTimerFullscreen" title="Akıllı tahtada dev dijital saat moduna geçer">
+            <i data-lucide="maximize-2"></i>
+            <span>Tam Ekran Yap</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. ETKİNLİK GEÇMİŞİ & RAPOR MODALI (History / Reports) -->
+  <div class="modal-overlay" id="historyModal">
+    <div class="modal-container" style="max-width: 650px;">
+      <div class="modal-header">
+        <div class="modal-header-title">
+          <i data-lucide="bar-chart-2" style="color: var(--primary);"></i>
+          <h3>Sınıf Raporu ve Etkinlik Geçmişi</h3>
+        </div>
+        <button class="modal-close" data-close="historyModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="history-stats-bar">
+          <div class="stat-card pos">
+            <div class="stat-val" id="reportPosPoints">+0</div>
+            <div class="stat-lbl">Pozitif Puan</div>
+          </div>
+          <div class="stat-card neg">
+            <div class="stat-val" id="reportNegPoints">-0</div>
+            <div class="stat-lbl">Geliştirilmeli</div>
+          </div>
+          <div class="stat-card total">
+            <div class="stat-val" id="reportPosRatio">%100</div>
+            <div class="stat-lbl">Olumlu Oran</div>
+          </div>
+        </div>
+
+        <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.75rem;">Son Verilen Puanlar</h4>
+        <div class="history-list" id="historyListContainer">
+          <!-- Dinamik geçmiş JS ile eklenecek -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" id="btnClearHistoryBtn" style="margin-right: auto; font-size: 0.8rem;">
+          <i data-lucide="trash-2"></i> Geçmişi Temizle
+        </button>
+        <button class="btn btn-secondary" data-close="historyModal">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. YENİ GRUP OLUŞTURMA MODALI -->
+  <div class="modal-overlay" id="newGroupModal">
+    <div class="modal-container" style="max-width: 500px;">
+      <div class="modal-header">
+        <div class="modal-header-title">
+          <i data-lucide="users" style="color: var(--primary);"></i>
+          <h3>Yeni Grup / Masa Oluştur</h3>
+        </div>
+        <button class="modal-close" data-close="newGroupModal">&times;</button>
+      </div>
+      <form id="formNewGroup">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Grup Adı</label>
+            <input type="text" id="newGroupNameInput" class="form-input" placeholder="Örn: Masa 1 veya Aslanlar" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Gruba Eklenecek Öğrenciler</label>
+            <div id="groupStudentSelectionList" style="max-height: 180px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem;">
+              <!-- Öğrenci checkboxları -->
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="newGroupModal">İptal</button>
+          <button type="submit" class="btn btn-primary">Grubu Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 9. YEDEKLEME / VERİ AKTARIMI MODALI -->
+  <div class="modal-overlay" id="backupModal">
+    <div class="modal-container" style="max-width: 480px;">
+      <div class="modal-header">
+        <div class="modal-header-title">
+          <i data-lucide="database" style="color: var(--primary);"></i>
+          <h3>Veri Yedekleme & Geri Yükleme</h3>
+        </div>
+        <button class="modal-close" data-close="backupModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+          Tüm sınıflarınızı, öğrencilerinizi ve puanlama ayarlarınızı bilgisayarınıza veya telefonunuza JSON dosyası olarak kaydedebilir, dilediğiniz zaman geri yükleyebilirsiniz.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <button class="btn btn-primary" id="btnExportData">
+            <i data-lucide="download"></i> Tüm Verileri Yedekle (JSON İndir)
+          </button>
+          
+          <div style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            <label class="form-label">Yedekten Geri Yükle</label>
+            <input type="file" id="importFileInput" accept=".json" style="display: none;">
+            <button class="btn btn-secondary" id="btnTriggerImport" style="width: 100%;">
+              <i data-lucide="upload"></i> Yedek Dosyasını Yükle (.json)
+            </button>
+          </div>
+
+          <div style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            <button class="btn btn-danger" id="btnResetToDefaults" style="width: 100%;">
+              <i data-lucide="refresh-cw"></i> Varsayılan Örnek Verilere Dön
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="backupModal">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. GÜRÜLTÜ ÖLÇER AYARLARI MODALI -->
+  <div class="modal-overlay" id="noiseSettingsModal">
+    <div class="modal-container" style="max-width: 480px;">
+      <div class="modal-header">
+        <div class="modal-header-title">
+          <i data-lucide="sliders" style="color: var(--primary);"></i>
+          <h3>Gürültü Ölçer Ayarları</h3>
+        </div>
+        <button class="modal-close" data-close="noiseSettingsModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group" style="display: flex; align-items: center; justify-content: space-between; background: #f8fafc; padding: 0.9rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 1.25rem;">
+          <div>
+            <strong style="font-size: 0.95rem; display: block;">Otomatik Puan Kırma</strong>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Gürültü eşiği aşılınca sınıftan 1 puan kes</span>
+          </div>
+          <label class="switch-toggle">
+            <input type="checkbox" id="noiseAutoPenaltyToggle" checked>
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" style="display: flex; justify-content: space-between;">
+            <span>Gürültü Ceza Eşik Değeri</span>
+            <span id="noiseThresholdValText" style="font-weight: 800; color: var(--danger);">80</span>
+          </label>
+          <input type="range" id="noiseThresholdSlider" min="50" max="95" value="80" class="form-range" style="width: 100%;">
+          <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.3rem;">
+            Ölçüm bu seviyenin üzerine çıktığında "Yüksek Gürültü" sayılır. (Varsayılan: 80)
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" style="display: flex; justify-content: space-between;">
+            <span>Ceza Tetikleme Süresi</span>
+            <span id="noiseDelayValText" style="font-weight: 800; color: var(--primary);">2 sn</span>
+          </label>
+          <input type="range" id="noiseDelaySlider" min="1" max="5" value="2" class="form-range" style="width: 100%;">
+          <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.3rem;">
+            Anlık seslerde (öksürük vb.) ceza verilmemesi için gürültünün bu süre boyunca sürmesi gerekir.
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" style="display: flex; justify-content: space-between;">
+            <span>Mikrofon Hassasiyeti</span>
+            <span id="noiseSensitivityValText" style="font-weight: 800; color: var(--positive-dark);">1.2x</span>
+          </label>
+          <input type="range" id="noiseSensitivitySlider" min="0.5" max="2.5" step="0.1" value="1.2" class="form-range" style="width: 100%;">
+          <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.3rem;">
+            Sınıfınız genişse veya mikrofon uzaktaysa hassasiyeti artırabilirsiniz.
+          </p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" data-close="noiseSettingsModal">Kaydet ve Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11. REHBERLİK & İDARE RAPORLAMA MODALI -->
+  <div class="modal-overlay" id="executiveReportsModal">
+    <div class="modal-container executive-reports-modal-container" style="max-width: 980px; width: 95vw;">
+      <div class="modal-header" style="border-bottom: 1.5px solid var(--border-color); padding: 1.1rem 1.5rem;">
+        <div class="modal-header-title">
+          <div class="report-header-icon-box">
+            <i data-lucide="bar-chart-3" style="color: #4f46e5; width: 22px; height: 22px;"></i>
+          </div>
+          <div>
+            <h3 style="font-size: 1.25rem; font-weight: 800;">Rehberlik & İdare Raporları</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 1px;">Okul geneli başarı, eksi puan alan öğrenciler ve sınıf istatistikleri</p>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <select id="repSeasonSelect" class="season-select" style="padding: 0.4rem 0.8rem; font-size: 0.82rem;">
+            <!-- Dinamik doldurulacak -->
+          </select>
+          <button class="modal-close" data-close="executiveReportsModal">&times;</button>
+        </div>
+      </div>
+
+      <!-- Filtreler & Kademe Seçimi -->
+      <div class="reports-filter-bar">
+        <div class="rep-grade-tabs" id="repGradeTabs">
+          <button class="rep-tab-btn active" data-repgrade="all">Tüm Okul</button>
+          <button class="rep-tab-btn" data-repgrade="ilkokul">🎒 İlkokul</button>
+          <button class="rep-tab-btn" data-repgrade="ortaokul">🚀 Ortaokul</button>
+          <button class="rep-tab-btn" data-repgrade="lise">🎓 Lise</button>
+          <button class="rep-tab-btn" data-repgrade="anaokulu">🐣 Anaokulu</button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">Sınıf:</label>
+          <select id="repClassSelect" class="season-select" style="min-width: 140px; font-size: 0.82rem; padding: 0.35rem 0.65rem;">
+            <option value="all">Tüm Sınıflar</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Ana Rapor Sekmeleri -->
+      <div class="reports-nav-tabs" id="reportsNavTabs">
+        <button class="rep-nav-tab active" data-target="repContentOverview">
+          <i data-lucide="layout-dashboard" style="width: 15px;"></i> Genel Özet
+        </button>
+        <button class="rep-nav-tab" data-target="repContentTop">
+          <i data-lucide="award" style="width: 15px;"></i> 🏆 Yıldız Öğrenciler
+        </button>
+        <button class="rep-nav-tab badge-highlight" data-target="repContentNeedsSupport">
+          <i data-lucide="alert-triangle" style="width: 15px;"></i> ⚠️ Rehberlik Destek Listesi (<span id="repNeedsSupportBadge">0</span>)
+        </button>
+        <button class="rep-nav-tab" data-target="repContentClasses">
+          <i data-lucide="layers" style="width: 15px;"></i> 🏫 Sınıf Sıralaması
+        </button>
+        <button class="rep-nav-tab rep-tab-reset" data-target="repContentReset">
+          <i data-lucide="rotate-ccw" style="width: 15px;"></i> 🔄 Puanları Sıfırla
+        </button>
+      </div>
+
+      <div class="modal-body reports-modal-body" id="reportsModalBody" style="max-height: 62vh; overflow-y: auto; padding: 1.25rem 1.5rem;">
+        <!-- Sekme 1: Genel Özet -->
+        <div class="rep-tab-content active" id="repContentOverview">
+          <!-- Metrik Kartları -->
+          <div class="rep-kpi-grid">
+            <div class="rep-kpi-card">
+              <div class="kpi-icon" style="background: #e0f2fe; color: #0284c7;"><i data-lucide="users"></i></div>
+              <div>
+                <span class="kpi-label">Toplam Öğrenci</span>
+                <h4 class="kpi-val" id="kpiTotalStudents">0</h4>
+              </div>
+            </div>
+            <div class="rep-kpi-card">
+              <div class="kpi-icon" style="background: #dcfce7; color: #16a34a;"><i data-lucide="trending-up"></i></div>
+              <div>
+                <span class="kpi-label">Net Toplam Puan</span>
+                <h4 class="kpi-val" id="kpiTotalPoints">0</h4>
+              </div>
+            </div>
+            <div class="rep-kpi-card kpi-warning-card">
+              <div class="kpi-icon" style="background: #fee2e2; color: #dc2626;"><i data-lucide="alert-circle"></i></div>
+              <div>
+                <span class="kpi-label">Rehberlik / Destek İhtiyacı</span>
+                <h4 class="kpi-val" id="kpiNeedsSupport" style="color: #dc2626;">0</h4>
+              </div>
+            </div>
+            <div class="rep-kpi-card">
+              <div class="kpi-icon" style="background: #fef3c7; color: #d97706;"><i data-lucide="trophy"></i></div>
+              <div>
+                <span class="kpi-label">En Başarılı Sınıf</span>
+                <h4 class="kpi-val" id="kpiTopClass">-</h4>
+              </div>
+            </div>
+          </div>
+
+          <!-- Davranış Analizi İki Kolon -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.25rem; margin-top: 1.5rem;">
+            <div class="rep-box">
+              <h5 class="rep-box-title" style="color: #16a34a;">
+                <i data-lucide="thumbs-up" style="width: 16px;"></i> En Çok Kazanılan Olumlu Beceriler
+              </h5>
+              <div id="repTopPosSkillsList" class="rep-skills-list">
+                <!-- JS ile yüklenecek -->
+              </div>
+            </div>
+            <div class="rep-box">
+              <h5 class="rep-box-title" style="color: #dc2626;">
+                <i data-lucide="alert-triangle" style="width: 16px;"></i> En Çok Karşılaşılan Geliştirilmeli Davranışlar
+              </h5>
+              <div id="repTopNegSkillsList" class="rep-skills-list">
+                <!-- JS ile yüklenecek -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sekme 2: Yıldız Öğrenciler (Top Performers) -->
+        <div class="rep-tab-content" id="repContentTop" style="display: none;">
+          <div style="margin-bottom: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-main);">🌟 Okul Genelinde En Çok Puan Alan İlk 25 Öğrenci</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Ödüllendirme ve motivasyon takibi için</span>
+          </div>
+          <div class="rep-table-wrap">
+            <table class="rep-table" id="tableTopStudents">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">Sıra</th>
+                  <th>Öğrenci</th>
+                  <th>Sınıf</th>
+                  <th>Kademe</th>
+                  <th style="text-align: right;">Toplam Puan</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- JS ile doldurulacak -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Sekme 3: Rehberlik Destek Listesi (En çok eksi puan alanlar) -->
+        <div class="rep-tab-content" id="repContentNeedsSupport" style="display: none;">
+          <div class="rep-notice-box">
+            <i data-lucide="info" style="color: #b91c1c; width: 20px; height: 20px; flex-shrink: 0;"></i>
+            <div style="font-size: 0.85rem; line-height: 1.45; color: #7f1d1d;">
+              <strong>Rehberlik ve İdare Takip Paneli:</strong> Aşağıdaki listede net puanı eksi (-) olan veya en çok geliştirilmeli davranış kaydı bulunan öğrenciler listelenmektedir. Öğrencilerin hangi konularda zorlandığını görerek birebir rehberlik görüşmesi yapabilirsiniz.
+            </div>
+          </div>
+          <div class="rep-table-wrap">
+            <table class="rep-table" id="tableNeedsSupportStudents">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">Sıra</th>
+                  <th>Öğrenci</th>
+                  <th>Sınıf</th>
+                  <th>Net Puan</th>
+                  <th>Eksi Davranış Sayısı</th>
+                  <th>Karşılaşılan Davranışlar</th>
+                  <th>Rehberlik Durumu</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- JS ile doldurulacak -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Sekme 4: Sınıf Sıralamaları -->
+        <div class="rep-tab-content" id="repContentClasses" style="display: none;">
+          <div style="margin-bottom: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-main);">🏫 Sınıflar Arası Puan ve Başarı Sıralaması</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Sınıf ortalamaları ve katılım</span>
+          </div>
+          <div class="rep-table-wrap">
+            <table class="rep-table" id="tableClassRankings">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">Sıra</th>
+                  <th>Sınıf</th>
+                  <th>Kademe</th>
+                  <th>Öğrenci Sayısı</th>
+                  <th>Toplam Puan</th>
+                  <th style="text-align: right;">Sınıf Ortalaması</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- JS ile doldurulacak -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Sekme 5: Puanları Sıfırla (Yeni Ay Başlat) -->
+        <div class="rep-tab-content" id="repContentReset" style="display: none;">
+          <div class="rep-reset-panel">
+            <div class="rep-reset-icon-halo">
+              <i data-lucide="rotate-ccw" style="width: 32px; height: 32px; color: #dc2626;"></i>
+            </div>
+            <h4 style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem;">
+              Yeni Ay Rekabetini Başlat & Puanları Sıfırla
+            </h4>
+            <p style="max-width: 600px; margin: 0 auto 1.5rem; font-size: 0.92rem; color: var(--text-muted); line-height: 1.55;">
+              Her ayın başında veya dönem sonunda rekabeti canlandırmak için tüm öğrenci puanlarını sıfırlayabilirsiniz. Sıfırlamadan önce mevcut tüm puanlar <strong>güvenli bir arşiv kaydı</strong> olarak sisteme yedeklenir, böylece hiçbir veri kaybı yaşanmaz.
+            </p>
+
+            <div class="rep-reset-actions-box">
+              <button class="btn btn-secondary" id="btnDownloadReportBeforeReset" style="padding: 0.75rem 1.4rem; font-size: 0.9rem;">
+                <i data-lucide="download"></i>
+                <span>1. Mevcut Ay Raporunu İndir (Yedek Al)</span>
+              </button>
+              <button class="btn btn-danger" id="btnOpenConfirmResetModal" style="padding: 0.75rem 1.5rem; font-size: 0.9rem; font-weight: 800;">
+                <i data-lucide="trash-2"></i>
+                <span>2. Puanları Sıfırla ve Yeni Ayı Başlat</span>
+              </button>
+            </div>
+
+            <!-- Geçmiş Sıfırlama Arşivleri -->
+            <div style="margin-top: 2rem; text-align: left;">
+              <h5 style="font-size: 0.92rem; font-weight: 800; margin-bottom: 0.75rem; color: var(--text-main); display: flex; align-items: center; gap: 0.4rem;">
+                <i data-lucide="history" style="width: 16px;"></i> Geçmiş Sıfırlama Arşivleri
+              </h5>
+              <div id="repArchivesList" style="font-size: 0.85rem; color: var(--text-muted);">
+                <!-- JS ile doldurulacak -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Alt Çubuğu -->
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; border-top: 1.5px solid var(--border-color); padding: 0.9rem 1.5rem;">
+        <div style="font-size: 0.82rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem;">
+          <i data-lucide="shield-check" style="width: 15px; height: 15px; color: #10b981;"></i>
+          <span>Edulem İdare & Rehberlik Yetkili Paneli</span>
+        </div>
+        <div style="display: flex; gap: 0.6rem;">
+          <button class="btn btn-secondary" id="btnRepExportPrint" title="Raporu Yazdır veya PDF olarak kaydet">
+            <i data-lucide="printer"></i>
+            <span>Yazdır / PDF</span>
+          </button>
+          <button class="btn btn-secondary" id="btnRepExportCsv" title="Raporu Excel (CSV) olarak indir">
+            <i data-lucide="download"></i>
+            <span>Excel İndir</span>
+          </button>
+          <button class="btn btn-secondary" data-close="executiveReportsModal">Kapat</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 12. PUANLARI SIFIRLAMA GÜVENLİK ONAY MODALI -->
+  <div class="modal-overlay" id="confirmResetPointsModal">
+    <div class="modal-container" style="max-width: 480px; text-align: center;">
+      <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
+        <div style="width: 60px; height: 60px; border-radius: 50%; background: #fee2e2; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+          <i data-lucide="alert-triangle" style="width: 32px; height: 32px; color: #dc2626;"></i>
+        </div>
+      </div>
+      <div class="modal-body" style="padding-top: 0.5rem;">
+        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem;">
+          Puanları Sıfırlamak İstediğinize Emin Misiniz?
+        </h3>
+        <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.25rem;">
+          Tüm sınıflardaki öğrencilerin mevcut puanları <strong>0</strong> olarak güncellenecektir. Puanlar sıfırlanmadan önce otomatik arşiv kaydına yedeklenecektir.
+        </p>
+
+        <div style="text-align: left; margin-bottom: 1.25rem;">
+          <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 0.35rem;">
+            Arşiv Başlığı / Dönem Notu:
+          </label>
+          <input type="text" id="inputResetArchiveTitle" class="form-control" style="width: 100%; padding: 0.65rem 0.9rem; border: 1.5px solid var(--border-color); border-radius: 10px;" placeholder="Örn: Ekim 2026 Ay Sonu Sıfırlaması">
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: center; gap: 0.75rem;">
+        <button class="btn btn-secondary" data-close="confirmResetPointsModal" style="padding: 0.65rem 1.25rem;">İptal</button>
+        <button class="btn btn-danger" id="btnExecuteResetPoints" style="padding: 0.65rem 1.5rem; font-weight: 800;">
+          <i data-lucide="check"></i>
+          <span>Evet, Puanları Sıfırla</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. SAĞ ALT KÖŞE YÜZEN MİNİ ZAMANLAYICI (Floating Corner Timer) -->
+  <aside class="floating-corner-timer" id="floatingCornerTimer" aria-label="Canlı Etkinlik Zamanlayıcısı" style="display: none;">
+    <div class="corner-timer-header">
+      <div class="corner-timer-badge">
+        <span id="cornerTimerIcon">📖</span>
+        <span id="cornerTimerTitle" class="corner-timer-title">Sessiz Okuma</span>
+      </div>
+      <div class="corner-timer-quick-actions">
+        <button class="corner-btn" id="btnCornerOpenModal" title="Zamanlayıcı Ayarlarını Aç">
+          <i data-lucide="external-link"></i>
+        </button>
+        <button class="corner-btn" id="btnCornerFullscreen" title="Tam Ekrana Büyüt">
+          <i data-lucide="maximize-2"></i>
+        </button>
+        <button class="corner-btn corner-btn-close" id="btnCornerClose" title="Köşe Sayacını Gizle">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+    </div>
+    <div class="corner-timer-body">
+      <div class="corner-timer-display" id="cornerTimerDisplay">15:00</div>
+      <div class="corner-timer-controls">
+        <button class="corner-ctrl-btn corner-btn-play" id="btnCornerPlayPause" title="Başlat / Duraklat">
+          <i data-lucide="play" id="cornerPlayIcon"></i>
+        </button>
+        <button class="corner-ctrl-btn" id="btnCornerAdd1m" title="+1 Dakika Ekle">+1dk</button>
+        <button class="corner-ctrl-btn" id="btnCornerReset" title="Sıfırla">
+          <i data-lucide="rotate-ccw"></i>
+        </button>
+      </div>
+    </div>
+    <!-- İlerleme Çubuğu -->
+    <div class="corner-timer-progress-track">
+      <div class="corner-timer-progress-bar" id="cornerProgressBar" style="width: 100%;"></div>
+    </div>
+  </aside>
+
+  <!-- 11. AKILLI TAHTA DEV TAM EKRAN ZAMANLAYICI (Fullscreen Giant Countdown Overlay) -->
+  <div class="fullscreen-timer-overlay" id="fullscreenTimerOverlay" style="display: none;">
+    <!-- Üst Kontrol & Başlık Çubuğu -->
+    <header class="fs-timer-topbar">
+      <div class="fs-class-badge">
+        <span class="fs-school-icon">🏫</span>
+        <span id="fsClassNameText">ClassLem Sınıfı</span>
+      </div>
+      <div class="fs-activity-headline">
+        <span class="fs-act-icon" id="fsActivityIcon">📖</span>
+        <span class="fs-act-title" id="fsActivityTitle">Sessiz Kitap Okuma</span>
+      </div>
+      <div class="fs-topbar-tools">
+        <button class="fs-icon-btn" id="btnFsToggleSound" title="Zil Sesini Aç/Kapat">
+          <i data-lucide="volume-2" id="fsSoundIcon"></i>
+        </button>
+        <button class="fs-icon-btn" id="btnFsMinimizeToCorner" title="Sayacı Kenara İndir (Küçült)">
+          <i data-lucide="minimize-2"></i>
+          <span class="fs-btn-label">Küçült</span>
+        </button>
+        <button class="fs-icon-btn fs-btn-exit" id="btnFsClose" title="Tam Ekrandan Çık (Esc)">
+          <i data-lucide="x"></i>
+          <span class="fs-btn-label">Çıkış</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Merkez: Dev Dairesel Sayaç -->
+    <main class="fs-timer-stage">
+      <div class="fs-timer-circle-wrapper">
+        <svg class="fs-ring-svg" viewBox="0 0 400 400">
+          <circle class="fs-ring-bg" cx="200" cy="200" r="170" />
+          <circle class="fs-ring-progress" id="fsRingCircle" cx="200" cy="200" r="170" />
+        </svg>
+
+        <div class="fs-center-content">
+          <div class="fs-sub-label" id="fsTimerSubLabel">KALAN SÜRE</div>
+          <div class="fs-digits" id="fsDigitsDisplay">15:00</div>
+          <div class="fs-status-pill" id="fsStatusPill">
+            <span class="fs-status-dot"></span>
+            <span id="fsStatusText">Hazır</span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Alt Kontrol Araçları -->
+    <footer class="fs-timer-footer">
+      <div class="fs-quick-adjust-group">
+        <button class="fs-adjust-btn" id="btnFsSub1m" title="1 Dakika Azalt">-1 Dk</button>
+        <button class="fs-adjust-btn" id="btnFsAdd1m" title="1 Dakika Ekle">+1 Dk</button>
+        <button class="fs-adjust-btn" id="btnFsAdd5m" title="5 Dakika Ekle">+5 Dk</button>
+      </div>
+
+      <div class="fs-main-actions">
+        <button class="fs-main-btn fs-btn-start" id="btnFsStartPause">
+          <i data-lucide="play" id="fsPlayIcon"></i>
+          <span id="fsPlayText">BAŞLAT</span>
+        </button>
+        <button class="fs-main-btn fs-btn-reset" id="btnFsReset" title="Sıfırla">
+          <i data-lucide="rotate-ccw"></i>
+          <span>Sıfırla</span>
+        </button>
+      </div>
+
+      <div class="fs-shortcut-tip">
+        <span>💡 İpucu: Tam ekrandan çıkmak için <strong>ESC</strong> tuşuna veya sağ üstteki <strong>Çıkış</strong> butonuna basabilirsiniz.</span>
+      </div>
+    </footer>
+
+    <!-- Süre Tamamlandı Kutlama Modalı/Ekranı -->
+    <div class="fs-celebration-overlay" id="fsCelebrationOverlay" style="display: none;">
+      <div class="fs-celebration-card">
+        <div class="fs-celeb-emoji">🎉 ⏰ 🎊</div>
+        <h2 class="fs-celeb-title">Süre Tamamlandı!</h2>
+        <p class="fs-celeb-sub" id="fsCelebActivityText">"Sessiz Okuma" etkinliği başarıyla bitti. Harika iş çıkardınız çocuklar!</p>
+        <div class="fs-celeb-actions">
+          <button class="btn btn-primary" id="btnFsCelebAgain" style="font-size: 1.1rem; padding: 0.8rem 1.8rem;">
+            <i data-lucide="rotate-ccw"></i> Tekrar Başlat
+          </button>
+          <button class="btn btn-secondary" id="btnFsCelebClose" style="font-size: 1.1rem; padding: 0.8rem 1.8rem;">
+            Sınıfa Dön
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ana Uygulama Mantığı (app.js) -->
+  <script src="app.js"></script>
+</body>
+</html>

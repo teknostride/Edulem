@@ -1,0 +1,31 @@
+﻿=== Course Configs ===
+  T├╝rk├ğe (ID:3) | Weight:4 | Mean:5.5193 | StdDev:7.0404 | Max:19
+  ─░nk─▒lap (ID:4) | Weight:1 | Mean:1.062 | StdDev:1.2682 | Max:4.667
+  Din K├╝lt├╝r├╝ (ID:5) | Weight:1 | Mean:1.8217 | StdDev:1.7774 | Max:5.333
+  ─░ngilizce (ID:6) | Weight:1 | Mean:4.6124 | StdDev:3.0895 | Max:10
+  Matematik (ID:1) | Weight:4 | Mean:8.1085 | StdDev:6.4229 | Max:20
+  Fen Bilgisi (ID:2) | Weight:4 | Mean:11.5736 | StdDev:6.8932 | Max:20
+
+MinTASP: 567.43
+MaxTASP: 1015.16
+Range: 447.73
+
+=== Abdulkadir's Nets ===
+  Course T├╝rk├ğe (ID:3): Net = 10.333
+  Course ─░nk─▒lap (ID:4): Net = 0
+  Course Din K├╝lt├╝r├╝ (ID:5): Net = 2.333
+  Course ─░ngilizce (ID:6): Net = 3.333
+  Course Matematik (ID:1): Net = 2
+  Course Fen Bilgisi (ID:2): Net = 5.333
+  Course T├╝rk├ğe: Z=0.684 T=56.84 ASP=227.35
+  Course ─░nk─▒lap: Z=-0.837 T=41.63 ASP=41.63
+  Course Din K├╝lt├╝r├╝: Z=0.288 T=52.88 ASP=52.88
+  Course ─░ngilizce: Z=-0.414 T=45.86 ASP=45.86
+  Course Matematik: Z=-0.951 T=40.49 ASP=161.96
+  Course Fen Bilgisi: Z=-0.905 T=40.95 ASP=163.79
+
+=== RESULT ===
+StudentTASP: 693.46
+T-Score (100-500): 212.59
+Raw total_point: 76.332
+Raw total_net: 23.333

@@ -1,0 +1,114 @@
+{
+    "TEACHER": [
+        {
+            "course_id": 2,
+            "course_name": "Fen Bilgisi",
+            "avg_net": 11.57,
+            "avg_point": 46.29,
+            "correct": 557,
+            "wrong": 229,
+            "blank": 62
+        },
+        {
+            "course_id": 1,
+            "course_name": "Matematik",
+            "avg_net": 8.11,
+            "avg_point": 32.43,
+            "correct": 421,
+            "wrong": 259,
+            "blank": 102
+        },
+        {
+            "course_id": 3,
+            "course_name": "T\u00fcrk\u00e7e",
+            "avg_net": 5.52,
+            "avg_point": 22.08,
+            "correct": 329,
+            "wrong": 471,
+            "blank": 31
+        },
+        {
+            "course_id": 6,
+            "course_name": "\u0130ngilizce",
+            "avg_net": 4.61,
+            "avg_point": 4.61,
+            "correct": 240,
+            "wrong": 140,
+            "blank": 44
+        },
+        {
+            "course_id": 5,
+            "course_name": "Din K\u00fclt\u00fcr\u00fc",
+            "avg_net": 1.82,
+            "avg_point": 1.82,
+            "correct": 151,
+            "wrong": 255,
+            "blank": 14
+        },
+        {
+            "course_id": 4,
+            "course_name": "\u0130nk\u0131lap",
+            "avg_net": 1.06,
+            "avg_point": 1.06,
+            "correct": 110,
+            "wrong": 294,
+            "blank": 21
+        }
+    ],
+    "FOUNDER": [
+        {
+            "course_id": 2,
+            "course_name": "Fen Bilgisi",
+            "avg_net": 11.57,
+            "avg_point": 46.29,
+            "correct": 557,
+            "wrong": 229,
+            "blank": 62
+        },
+        {
+            "course_id": 1,
+            "course_name": "Matematik",
+            "avg_net": 8.11,
+            "avg_point": 32.43,
+            "correct": 421,
+            "wrong": 259,
+            "blank": 102
+        },
+        {
+            "course_id": 3,
+            "course_name": "T\u00fcrk\u00e7e",
+            "avg_net": 5.52,
+            "avg_point": 22.08,
+            "correct": 329,
+            "wrong": 471,
+            "blank": 31
+        },
+        {
+            "course_id": 6,
+            "course_name": "\u0130ngilizce",
+            "avg_net": 4.61,
+            "avg_point": 4.61,
+            "correct": 240,
+            "wrong": 140,
+            "blank": 44
+        },
+        {
+            "course_id": 5,
+            "course_name": "Din K\u00fclt\u00fcr\u00fc",
+            "avg_net": 1.82,
+            "avg_point": 1.82,
+            "correct": 151,
+            "wrong": 255,
+            "blank": 14
+        },
+        {
+            "course_id": 4,
+            "course_name": "\u0130nk\u0131lap",
+            "avg_net": 1.06,
+            "avg_point": 1.06,
+            "correct": 110,
+            "wrong": 294,
+            "blank": 21
+        }
+    ]
+}

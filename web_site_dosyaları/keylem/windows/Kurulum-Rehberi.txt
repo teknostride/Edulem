@@ -1,0 +1,83 @@
+====================================================================
+KEYLEM - AKILLI TAHTA KİLİT & CLASSLEM SİSTEMİ KURULUM TALİMATI
+====================================================================
+
+KeyLem, akıllı tahtalarda teneffüslerde ve açılışta ekranı kilitleyen,
+sınıfın ClassLem şampiyonlar podyumunu gösteren ve öğretmenlerin
+EduLem mobil uygulamasındaki dinamik 6 haneli kodla (veya Master PIN ile)
+kilidi açmasını sağlayan kiosk kilit sistemidir.
+
+1. ADIM: DOSYALARIN TAHTAYA YERLEŞTİRİLMESİ
+--------------------------------------------------------------------
+- 'keylem' klasörünü okulun web sunucusuna veya tahtadaki yerel web sunucusuna (XAMPP / IIS / Web Sunucusu) atın.
+- Ya da doğrudan tarayıcı üzerinden açın:
+  Örnek: http://okul-sunucusu/keylem/index.html (veya yerel http://localhost/keylem/index.html)
+
+2. ADIM: SINIF YAPILANDIRMASI (BİR KEZ YAPILIR)
+--------------------------------------------------------------------
+- Tahtada 'index.html' sayfasını açın.
+- Sağ alttaki "Tahta Kurulumu (Master PIN)" butonuna tıklayın.
+- Kurum Master Kodunu girin (Varsayılan: 849201).
+- Bu tahtanın ait olduğu sınıfı seçin (Örn: 2-A Sınıfı).
+- "Sınıfı Kaydet" butonuna basın.
+- Tahta artık yıl boyunca 2-A olarak kilitlenecek ve 2-A ClassLem podyumunu gösterecektir.
+
+3. ADIM: WİNDOWS OTOMATİK KURULUM (ÖNERİLEN YÖNTEM)
+--------------------------------------------------------------------
+YÖNTEM A (Tek Tıkla Otomatik Kurulum - En Güvenli & Kiosk Modu):
+- 'windows/KeyLem-Kurulum.bat' dosyasına sağ tıklayıp "Yönetici Olarak Çalıştır" deyin.
+- Bu işlem tek tıkla şunları yapar:
+  1) C:\KeyLem dizinine izole tam ekran kiosk motorunu kurar (Tarayıcı penceresi ve sekmeleri ortadan kalkar).
+  2) Arka plan masaüstüne geçiş ve simge durumuna küçültme köprüsünü kurar.
+  3) Windows Görev Zamanlayıcısı'na en yüksek öncelikle açılış görevi tanımlar.
+  4) Dokunmatik sol kenar kaydırma (Task View), Görev Yöneticisi ve kısayol kilitlerini uygular.
+- [!] ÇOK ÖNEMLİ: Kurulum bittiğinde ekranda gelen soruya 'E' (Evet) yazarak veya el ile AKILLI TAHTAYI YENİDEN BAŞLATINIZ (REBOOT). Tahta açıldığında artık hiçbir tarayıcı sekmesi/çerçevesi olmadan doğrudan tam ekran akıllı tahta kilidiyle açılacaktır.
+
+YÖNTEM B (Manuel Başlatıcı):
+- 'windows/Start-KeyLem.bat' dosyasını doğrudan çalıştırabilirsiniz.
+
+4. ADIM: DERS İŞLEYİŞİ (WİNDOWS & Z-KİTAP KULLANIMI)
+--------------------------------------------------------------------
+- Öğretmen sınıfa girdiğinde telefonundaki EduLem uygulamasını açar.
+- "Akıllı Tahta Anahtarı" butonuna tıklar.
+- Ekranda görünen 6 haneli kodu tahtadaki dokunmatik ekrana girer.
+- Kilit anında açılır, tam ekrandan çıkar ve Windows görev çubuğu aktifleşir.
+- Öğretmen ekrandaki "Windows Masaüstüne Geç" butonuna basarak (veya pencerenin sağ üstündeki '-' simge durumuna küçült butonuna tıklayarak) masaüstündeki Z-Kitap, Antropi, PDF ve tüm ders uygulamalarını serbestçe kullanır.
+- Öğrencilere puan vermek istediğinde araç çubuğundaki "ClassLem" butonuna basar, puanlamayı yapar ve '✕ Kapat / Gizle' diyerek dersine devam eder.
+- Öğretmen ders bitiminde 'Dersi Bitir & Kilitle' butonuna basar veya 40 dakikalık ders süresi dolunca tahta otomatik olarak tam ekran kilitlenir.
+
+5. ADIM: ACİL DURUM (MASTER KOD)
+--------------------------------------------------------------------
+- Öğretmen telefonunu evde unuttuysa veya herhangi bir sorun yaşanırsa:
+  Yönetici Master Kodu (Varsayılan: 849201) girildiğinde tahta HER KOŞULDA açılır.
+- Master Kod, '/keylem/admin.html' sayfasından kurum yöneticisi tarafından istenildiği an değiştirilebilir.
+
+6. ADIM: ÖĞRENCİ MÜDAHALELERİ VE GÜVENLİK ANALİZİ
+--------------------------------------------------------------------
+KeyLem, öğrencilerin akıllı tahtayı kırma/atlatma taktiklerine karşı çok katmanlı savunma ile donatılmıştır:
+
+1) Başlangıçta Devreye Girmeme (Gecikmeli Başlatma) Zafiyeti:
+   - Sorun: Tahta açılırken kilit devreye girmeden önce klavyeden Win+R / Görev Yöneticisi açmaya çalışma.
+   - Çözüm: 'Ogrenci-Onlemleri-Ayarla.bat' çalıştırıldığında 'StartupDelayInMSec' sıfırlanır ve sistem 'schtasks' (Görev Zamanlayıcı) ile en yüksek öncelikli seviyeden başlatılır. Açılışta bekleme ortadan kalkar.
+
+2) Kısayollar ve Sistem Araçları (Alt+Tab, Win+R, 5x Shift Yapışkan Tuşlar, Kenar Kaydırma):
+   - Sorun: Alt+F4 ile uygulamayı kapatma, 5 kez Shift'e basarak Yapışkan Tuşlar (sethc.exe) menüsünden dışarı sızma veya dokunmatik ekranın solundan sağa çekerek Windows Görev Görünümü menüsünü açma.
+   - Çözüm:
+     * Bekçi Döngüsü (Watchdog): Alt+F4 yapılsa bile kilit 1 saniyede otomatik yeniden başlar.
+     * Yapışkan Tuşlar (Sticky Keys) ve Çalıştır (Win+R) kilitlenmiştir.
+     * Görev Yöneticisi (Ctrl+Alt+Del) engellenmiştir.
+     * Dokunmatik Kenar Kaydırma (Edge Swipe) hem Windows Kayıt Defterinde (AllowEdgeSwipe=0) hem de web katmanında (JavaScript touch capture + touch-action: none) tamamen devre dışı bırakılmıştır.
+
+3) USB Bellek ile Kilit Açma / Klonlama Zafiyeti:
+   - Sorun: Geleneksel USB anahtarlı yazılımlarda öğrenciler USB'nin imajını kopyalayarak tahtayı açabilir.
+   - Çözüm: KeyLem USB anahtar KULLANMAZ! Bankacılık seviyesinde 30 saniyede bir değişen mobil dinamik TOTP algoritması kullanır. Klonlanması veya taklit edilmesi imkansızdır.
+
+4) Güvenli Mod (Safe Mode) ve BIOS Boot Zafiyeti:
+   - 'Ogrenci-Onlemleri-Ayarla.bat' Windows ön yükleme menüsünü (displaybootmenu no) kapatır.
+   - Ek Tavsiye: Okul Bilişim Formatörünün akıllı tahta BIOS/UEFI menüsüne şifre koyması ve "USB'den Önyükleme (USB Boot)" özelliğini kapatması donanım güvenliği için tavsiye edilir.
+
+5) Yerel Yönetici (Local Admin) Yetkisi Kötüye Kullanımı:
+   - Akıllı tahtalarda günlük kullanım için oluşturulan kullanıcı hesabının "Standart Kullanıcı (Yetkisiz)" olması, öğretmen/idareci şifresinin öğrencilere verilmemesi önerilir.
+
+Ayarları eski haline döndürmek için 'windows/Ogrenci-Onlemleri-Kaldir.bat' dosyasını sağ tıklayıp "Yönetici Olarak Çalıştır" demeniz yeterlidir.
+====================================================================

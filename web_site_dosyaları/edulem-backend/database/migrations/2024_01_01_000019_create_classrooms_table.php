@@ -1,0 +1,39 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('classrooms', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('tenant_id')->constrained('tenants')->onDelete('cascade');
+            $table->string('name');
+            $table->string('code')->nullable();
+            $table->integer('capacity')->default(30);
+            $table->foreignId('teacher_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->string('grade_level')->nullable(); // 9, 10, 11, 12, etc.
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+
+            $table->index('tenant_id');
+            $table->index('teacher_id');
+            $table->index('grade_level');
+            $table->unique(['tenant_id', 'code']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('classrooms');
+    }
+};

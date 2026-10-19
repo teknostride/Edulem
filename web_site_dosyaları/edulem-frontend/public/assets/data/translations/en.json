@@ -1,0 +1,17 @@
+{
+    "user-role": "Yönetici",
+    "main": "Genel",
+    "dashboards": "Paneller",
+    "dashboard-ecommerce": "E-Ticaret",
+    "dashboard-analytics": "Analitik",
+    "dashboard-crm": "Müşteri İlişkileri",
+    "dashboard-finance": "Finans",
+    "dashboard-projects": "Projeler",
+    "apps": "Uygulamalar",
+    "ecommerce": "E-Ticaret",
+    "products": "Ürünler",
+    "apps-chat": "Sohbet",
+    "projects": "Projeler",
+    "custom-pages": "Özel Sayfalar",
+    "pages": "Sayfalar"
+}

@@ -1,0 +1,15 @@
+{
+    "id": 8,
+    "name": "Ömer Dutkun",
+    "email": "omerdutkun@gmail.com",
+    "avatar": null,
+    "role": "Öğretmen",
+    "role_id": 5,
+    "role_label": "Öğretmen",
+    "campus_ids": [
+        1
+    ],
+    "education_level_ids": [
+        4
+    ]
+}

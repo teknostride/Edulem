@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KeyLem - Kurum Akıllı Tahta Yönetimi</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      overflow-y: auto !important;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .admin-container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--surface-dark);
+      border: 1px solid var(--surface-border);
+      padding: 24px 32px;
+      border-radius: 24px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    }
+    .admin-card {
+      background: var(--surface-dark);
+      border: 1px solid var(--surface-border);
+      padding: 28px;
+      border-radius: 24px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    }
+    .admin-card h2 {
+      font-size: 19px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #60a5fa;
+    }
+    .live-key-card {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(15, 23, 42, 0.8));
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      padding: 28px;
+      border-radius: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .live-key-val {
+      font-size: 38px;
+      font-weight: 900;
+      letter-spacing: 6px;
+      color: #38bdf8;
+      font-family: monospace;
+    }
+    .alert-box {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #fcd34d;
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    th {
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-master {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .badge-teacher {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="admin-container">
+
+    <!-- Üst Başlık -->
+    <div class="admin-header">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div class="brand-icon" style="width: 44px; height: 44px; font-size: 22px;">🔑</div>
+        <div>
+          <h1 style="font-size: 22px; font-weight: 800;">KeyLem Kurum Yapısı</h1>
+          <p style="font-size: 13px; color: var(--text-muted);">Akıllı Tahta Kilit Sistemi & Master Anahtar Yönetimi</p>
+        </div>
+      </div>
+      <a href="index.html" class="btn-ghost" target="_blank">
+        <i data-lucide="monitor" style="width: 15px; height: 15px;"></i>
+        <span>Tahta Ekranını Aç</span>
+      </a>
+    </div>
+
+    <!-- Canlı Dinamik Anahtar (Öğretmen Testi İçin) -->
+    <div class="live-key-card">
+      <div>
+        <div style="font-size: 13px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">
+          Şu Anda Geçerli Öğretmen Kodu
+        </div>
+        <div class="live-key-val" id="liveKey">------</div>
+        <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">
+          Mobil uygulamadaki öğretmenler şu anda bu kod ile tahtaları açabilir.
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-size: 24px; font-weight: 800; color: #38bdf8;" id="remainingSeconds">30</div>
+        <div style="font-size: 11px; color: var(--text-muted);">saniye sonra yenilenir</div>
+      </div>
+    </div>
+
+    <!-- Kurum Master Acil Durum Kodu & Ayarlar Formu -->
+    <div class="admin-card">
+      <h2>
+        <i data-lucide="shield-alert"></i>
+        <span>Kurum Master Kodu & Güvenlik Ayarları</span>
+      </h2>
+
+      <div class="alert-box">
+        ⚠️ <strong>Master Acil Durum Kodu:</strong> Öğretmen telefonunu unuttuğunda veya herhangi bir teknik aksaklıkta okuldaki <u>tüm akıllı tahtaları her koşulda (internetsiz dahil) açan</u> kurum özel anahtarıdır. Sadece yetkili yöneticilerle paylaşınız.
+      </div>
+
+      <form id="settingsForm">
+        <div class="form-group">
+          <label>Kurum Master Kodu (Acil Durum PIN):</label>
+          <input type="text" class="form-control" id="inputMasterPin" maxlength="10" placeholder="Örn: 849201" required>
+        </div>
+
+        <div class="form-group">
+          <label>Ders Kilit Süresi (Dakika):</label>
+          <input type="number" class="form-control" id="inputDuration" min="5" max="120" placeholder="40" required>
+        </div>
+
+        <div class="form-group">
+          <label>Kurum TOTP Gizli Anahtarı (Base32):</label>
+          <input type="text" class="form-control" id="inputSecretKey" readonly style="color: #94a3b8; font-family: monospace;">
+        </div>
+
+        <button type="submit" class="btn-primary" id="btnSave">Ayarları Kaydet</button>
+      </form>
+    </div>
+
+    <!-- Kurulum Talimatları -->
+    <div class="admin-card">
+      <h2>
+        <i data-lucide="help-circle"></i>
+        <span>Akıllı Tahta Kurulum Adımları</span>
+      </h2>
+      <ol style="padding-left: 20px; font-size: 14px; line-height: 1.8; color: #cbd5e1;">
+        <li>Akıllı tahtanın tarayıcısında (veya kiosk kısayolunda) <code>/keylem/index.html</code> adresini açın.</li>
+        <li>Sağ alttaki <strong>"Tahta Kurulumu"</strong> butonuna tıklayın ve Kurum Master Kodunu girin.</li>
+        <li>Bu tahtanın ait olduğu sınıfı (Örn: <strong>2-A</strong>) seçip kaydedin.</li>
+        <li>Artık tahta açıldığında doğrudan 2-A'nın ClassLem podyumu ile kilitli karşılar. Öğretmen mobil kodunu girdiğinde kilit açılır.</li>
+      </ol>
+    </div>
+
+  </div>
+
+  <script>
+    if (window.lucide) lucide.createIcons();
+
+    // Ayarları Çek
+    async function loadSettings() {
+      try {
+        const res = await fetch('api/settings.php');
+        const data = await res.json();
+        if (data.success && data.settings) {
+          document.getElementById('inputMasterPin').value = data.settings.master_pin;
+          document.getElementById('inputDuration').value = data.settings.lesson_duration_minutes;
+          document.getElementById('inputSecretKey').value = data.settings.secret_key;
+        }
+      } catch (err) {
+        console.error('Ayarlar yüklenemedi:', err);
+      }
+    }
+
+    // Canlı Key Çek
+    async function updateLiveKey() {
+      try {
+        const res = await fetch('api/generate_key.php');
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('liveKey').textContent = data.key;
+          document.getElementById('remainingSeconds').textContent = data.seconds_remaining;
+        }
+      } catch (_) {}
+    }
+
+    // Formu Kaydet
+    document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const pin = document.getElementById('inputMasterPin').value.trim();
+      const dur = document.getElementById('inputDuration').value;
+
+      try {
+        const res = await fetch('api/settings.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            master_pin: pin,
+            lesson_duration_minutes: dur,
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('Ayarlar başarıyla güncellendi!');
+          loadSettings();
+        } else {
+          alert('Hata: ' + data.message);
+        }
+      } catch (err) {
+        alert('Kaydetme hatası: ' + err);
+      }
+    });
+
+    loadSettings();
+    updateLiveKey();
+    setInterval(updateLiveKey, 1000);
+  </script>
+</body>
+</html>

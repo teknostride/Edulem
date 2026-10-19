@@ -1,0 +1,35 @@
+# QuizLem - Apache / Plesk Yönlendirmesi
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /quizlem/
+
+    # Authorization başlığının PHP'ye iletilmesini sağla (Plesk / Apache için kritik)
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # 1. Tüm API İsteklerini Bağımsız PHP REST API Motoruna (api.php) Yönlendir
+    RewriteRule ^api/(.*)$ api.php?endpoint=$1 [QSA,L]
+
+    # 2. Eğer Node.js arka planda çalışıyorsa Socket.IO trafiğini aktar
+    <IfModule mod_proxy.c>
+        RewriteRule ^socket.io/(.*)$ ws://127.0.0.1:3000/socket.io/$1 [P,L]
+    </IfModule>
+
+    # 3. Yüklenen görsellere doğrudan erişim (uploads/)
+    RewriteRule ^uploads/(.*)$ public/uploads/$1 [L]
+
+    # 4. Var olan dosya veya klasör isteklerini doğrudan sun
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # 5. Kalan web isteklerini public klasörüne ilet
+    RewriteCond %{REQUEST_URI} !^/quizlem/public/
+    RewriteRule ^(.*)$ public/$1 [L,QSA]
+</IfModule>
+
+# Dizin listelemeyi kapat
+Options -Indexes
+
+# Varsayılan açılış dosyası
+DirectoryIndex public/index.html public/index.php index.html index.php

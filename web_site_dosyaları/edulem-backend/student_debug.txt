@@ -1,0 +1,20 @@
+Student: ABDULKADİR SERT (ID: 6035)
+
+Exam: 7. Sınıf Sözel (ID: 7)
+  Total Net: 16
+  Total Point: 46.999
+  Share Roles: {"parent":false,"teacher":false}
+  Merged Exam IDs: null
+-------------------
+Exam: 7. Sınıf Sayısal (ID: 6)
+  Total Net: 7.333
+  Total Point: 29.333
+  Share Roles: {"parent":false,"teacher":false}
+  Merged Exam IDs: null
+-------------------
+Session: LGS 2026 (ID: 1)
+  Exam IDs: [6,7]
+    Sub-Exam: 7. Sınıf Sözel (ID: 7) - Net: 16, Point: 46.999
+    Sub-Exam: 7. Sınıf Sayısal (ID: 6) - Net: 7.333, Point: 29.333
+  Total Sum Point: 76.332
+-------------------

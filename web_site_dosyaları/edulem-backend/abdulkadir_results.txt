@@ -1,0 +1,10 @@
+All results for student 6035:
+
+ID: 174 | Exam ID: 7 | Name: 7. Sınıf Sözel
+  Net: 16 | Point: 46.999
+  Merged IDs in Exam: null
+-------------------
+ID: 204 | Exam ID: 6 | Name: 7. Sınıf Sayısal
+  Net: 7.333 | Point: 29.333
+  Merged IDs in Exam: null
+-------------------

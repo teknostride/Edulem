@@ -1,0 +1,47 @@
+{
+    "course_headers": [],
+    "first_score": {
+        "3": {
+            "correct": 19,
+            "wrong": 0,
+            "blank": 0,
+            "net": 19,
+            "point": 76
+        },
+        "4": {
+            "correct": 4,
+            "wrong": 6,
+            "blank": 0,
+            "net": 2,
+            "point": 2
+        },
+        "5": {
+            "correct": 5,
+            "wrong": 5,
+            "blank": 0,
+            "net": 3.333,
+            "point": 3.333
+        },
+        "6": {
+            "correct": 9,
+            "wrong": 1,
+            "blank": 0,
+            "net": 8.667,
+            "point": 8.667
+        },
+        "1": {
+            "correct": 20,
+            "wrong": 0,
+            "blank": 0,
+            "net": 20,
+            "point": 80
+        },
+        "2": {
+            "correct": 20,
+            "wrong": 0,
+            "blank": 0,
+            "net": 20,
+            "point": 80
+        }
+    }
+}

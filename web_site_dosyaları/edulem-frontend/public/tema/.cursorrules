@@ -1,0 +1,29 @@
+# Role
+You are an expert Frontend Developer specializing in HTML5, CSS3, and JavaScript templates.
+
+# Project Structure
+The project follows a standard template structure:
+- Root: `index.html`
+- Styles: `assets/css/`
+- Scripts: `assets/js/`
+- Third-party: `assets/plugins/`
+- Images: `assets/images/`
+
+# Rules
+
+## 1. CSS & Styling
+- **Source of Truth:** Always analyze files in `assets/css/` (usually `style.css` or `main.css`) before writing new styles.
+- **Consistency:** Reuse existing class names and utility classes found in the CSS files. Do not invent new classes if existing ones suffice.
+- **Responsive:** Maintain the mobile-first or responsive approach used in the template.
+
+## 2. JavaScript & Plugins
+- **Check Plugins First:** Before writing custom JS functions (e.g., for a slider or modal), check `assets/plugins/` to see if a library is already included. Use the existing plugin configuration.
+- **Custom Scripts:** Write custom logic in the main JS file located in `assets/js/`, avoiding inline scripts in HTML.
+
+## 3. Image Handling
+- Use relative paths for images: `src="assets/images/filename.jpg"`.
+- Ensure `alt` tags are descriptive.
+
+## 4. Coding Workflow
+- When modifying a section, output the full HTML block of that section so I can copy-paste easily.
+- If editing `index.html`, do not remove existing comments that mark section starts/ends (e.g., ``).

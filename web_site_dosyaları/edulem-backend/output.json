@@ -1,0 +1,23 @@
+{
+    "Exam 10": {
+        "name": "7. S\u0131n\u0131f \u0130lk Deneme",
+        "roles": {
+            "parent": true,
+            "teacher": true
+        }
+    },
+    "Exam 6": {
+        "name": "7. S\u0131n\u0131f Say\u0131sal",
+        "roles": {
+            "parent": false,
+            "teacher": false
+        }
+    },
+    "Exam 7": {
+        "name": "7. S\u0131n\u0131f S\u00f6zel",
+        "roles": {
+            "parent": false,
+            "teacher": false
+        }
+    }
+}
