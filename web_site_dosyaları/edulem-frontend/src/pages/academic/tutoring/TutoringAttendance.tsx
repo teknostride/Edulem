@@ -120,8 +120,273 @@ const TutoringAttendance = () => {
         }
     };
 
+    // Okul adını al
+    const getSchoolName = () => {
+        try {
+            const imp = localStorage.getItem('EDULEM_IMPERSONATION');
+            if (imp) {
+                const impData = JSON.parse(imp);
+                if (impData.tenant_name) return impData.tenant_name;
+            }
+            const ud = JSON.parse(localStorage.getItem('USER_DATA') || '{}');
+            if (ud.tenant_name) return ud.tenant_name;
+            if (ud.institution_name) return ud.institution_name;
+            if (ud.tenant?.name) return ud.tenant.name;
+            if (ud.school_name) return ud.school_name;
+            const cached = localStorage.getItem('TENANT_NAME') || localStorage.getItem('INSTITUTION_NAME');
+            if (cached) return cached;
+            if (typeof window !== 'undefined') {
+                const host = window.location.hostname.toLowerCase();
+                if (host.startsWith('akirfan.')) return 'AK İRFAN OKULLARI';
+                if (host.startsWith('demo.')) return 'DEMO OKUL';
+            }
+        } catch {}
+        return 'EDULEM EĞİTİM KURUMLARI';
+    };
+
+    // Güvenli ve Temiz Yazdırma (İzole Iframe)
+    const printHtml = (htmlContent: string) => {
+        let iframe = document.getElementById('edulem-print-frame') as HTMLIFrameElement;
+        if (!iframe) {
+            iframe = document.createElement('iframe');
+            iframe.id = 'edulem-print-frame';
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            iframe.style.visibility = 'hidden';
+            document.body.appendChild(iframe);
+        }
+
+        const doc = iframe.contentWindow?.document || iframe.contentDocument;
+        if (!doc) {
+            window.print();
+            return;
+        }
+
+        doc.open();
+        doc.write(htmlContent);
+        doc.close();
+
+        setTimeout(() => {
+            try {
+                iframe.contentWindow?.focus();
+                iframe.contentWindow?.print();
+            } catch {
+                window.print();
+            }
+        }, 300);
+    };
+
     const handlePrint = () => {
-        window.print();
+        if (!session) {
+            window.print();
+            return;
+        }
+
+        const schoolTitle = getSchoolName();
+        const dateStr = session.date ? new Date(session.date).toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' }) : '-';
+        const timeStr = `${session.start_time ? (session.start_time.length > 5 ? session.start_time.substring(11, 16) || session.start_time.substring(0, 5) : session.start_time) : ''} - ${session.end_time ? (session.end_time.length > 5 ? session.end_time.substring(11, 16) || session.end_time.substring(0, 5) : session.end_time) : ''}`;
+
+        const html = `<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <title>${session.title} - Resmi Yoklama ve Katılım Raporu</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 12mm 10mm;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #111;
+            background: #fff;
+            margin: 0;
+            padding: 8px;
+            font-size: 11px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #222;
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+        }
+        .header h1 {
+            font-size: 16px;
+            margin: 0 0 4px 0;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+        .header h2 {
+            font-size: 13px;
+            margin: 0 0 4px 0;
+            font-weight: 700;
+            color: #333;
+        }
+        .header .meta {
+            font-size: 10px;
+            color: #666;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+            border: 1px solid #999;
+        }
+        .info-table td {
+            padding: 5px 8px;
+            font-size: 11px;
+            border: 1px solid #ccc;
+        }
+        .info-table td.label {
+            font-weight: bold;
+            background: #f4f5f7 !important;
+            width: 18%;
+            color: #333;
+        }
+        .section-title {
+            font-size: 12px;
+            font-weight: 800;
+            margin: 14px 0 6px 0;
+            text-transform: uppercase;
+            display: flex;
+            justify-content: space-between;
+        }
+        table.list-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        table.list-table thead {
+            display: table-header-group;
+        }
+        table.list-table tr {
+            page-break-inside: avoid;
+        }
+        table.list-table th, table.list-table td {
+            border: 1px solid #333;
+            padding: 5px 7px;
+            font-size: 10.5px;
+        }
+        table.list-table th {
+            background-color: #f1f3f5 !important;
+            font-weight: 700;
+            text-align: left;
+        }
+        .text-center { text-align: center; }
+        .footer {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            page-break-inside: avoid;
+        }
+        .footer-col {
+            width: 45%;
+            text-align: center;
+        }
+        .footer-col .sig-space {
+            height: 45px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>${schoolTitle}</h1>
+        <h2>ETÜT VE ÖZEL DERS RESMİ YOKLAMA & KATILIM RAPORU</h2>
+        <div class="meta">Rapor Tarihi: ${new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+    </div>
+
+    <table class="info-table">
+        <tr>
+            <td class="label">Oturum:</td>
+            <td><strong>${session.title || '-'}</strong></td>
+            <td class="label">Tarih:</td>
+            <td>${dateStr}</td>
+        </tr>
+        <tr>
+            <td class="label">Ders Adı:</td>
+            <td>${session.lesson?.name || '-'}</td>
+            <td class="label">Saat / Süre:</td>
+            <td>${timeStr}</td>
+        </tr>
+        <tr>
+            <td class="label">Öğretmen:</td>
+            <td>${session.teacher?.name || '-'}</td>
+            <td class="label">Derslik / Salon:</td>
+            <td>${session.room || 'Belirtilmedi'}</td>
+        </tr>
+        <tr>
+            <td class="label">Toplam Kayıtlı:</td>
+            <td><strong>${students.length} Öğrenci</strong></td>
+            <td class="label">Katılım Durumu:</td>
+            <td><strong>${presentCount} Geldi</strong>, ${absentCount} Gelmedi, ${lateCount} Geç (%${attendanceRate})</td>
+        </tr>
+    </table>
+
+    <div class="section-title">
+        <span>ÖĞRENCİ KATILIM LİSTESİ (${students.length} ÖĞRENCİ)</span>
+    </div>
+    <table class="list-table">
+        <thead>
+            <tr>
+                <th style="width: 35px; text-align: center;">#</th>
+                <th style="width: 70px; text-align: center;">Okul No</th>
+                <th>Öğrenci Adı Soyadı</th>
+                <th style="width: 90px;">Sınıfı</th>
+                <th style="width: 110px; text-align: center;">Katılım Durumu</th>
+                <th>Not / Açıklama</th>
+                <th style="width: 75px; text-align: center;">İmza</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${students.length === 0 ? `
+                <tr><td colspan="7" class="text-center" style="padding: 15px;">Kayıtlı öğrenci bulunamadı.</td></tr>
+            ` : students.map((st, i) => {
+                const stStatus = st.attendance?.status;
+                const statusLabel = stStatus === 'present' ? 'GELDİ' : (stStatus === 'late' ? 'GEÇ GELDİ' : (stStatus === 'absent' ? 'GELMEDİ' : '-'));
+                const statusColor = stStatus === 'present' ? '#198754' : (stStatus === 'late' ? '#fd7e14' : '#dc3545');
+                return `
+                    <tr>
+                        <td class="text-center">${i + 1}</td>
+                        <td class="text-center"><strong>${st.school_no || '-'}</strong></td>
+                        <td><strong>${st.name || st.student_name || '-'}</strong></td>
+                        <td>${st.classroom?.name || st.classroom_name || '-'}</td>
+                        <td class="text-center" style="font-weight: bold; color: ${statusColor};">${statusLabel}</td>
+                        <td style="font-size: 10px;">${st.attendance?.notes || '-'}</td>
+                        <td></td>
+                    </tr>
+                `;
+            }).join('')}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <div class="footer-col">
+            <div><strong>Dersi Veren Öğretmen</strong></div>
+            <div style="margin-top: 4px;">${session.teacher?.name || '-'}</div>
+            <div class="sig-space"></div>
+            <div>(İmza)</div>
+        </div>
+        <div class="footer-col">
+            <div><strong>Okul / Kurum Yönetimi</strong></div>
+            <div style="margin-top: 4px;">Onay</div>
+            <div class="sig-space"></div>
+            <div>(İmza / Mühür)</div>
+        </div>
+    </div>
+</body>
+</html>`;
+
+        printHtml(html);
     };
 
     if (loading) {
@@ -600,33 +865,61 @@ const TutoringAttendance = () => {
                 }
 
                 @media print {
-                    body * {
-                        visibility: hidden !important;
-                    }
-                    .no-print, .sidenav-menu, .topbar, footer, .wrapper, .modal-backdrop {
+                    /* Menü, üst çubuk, modal ve no-print elementlerini gizle */
+                    .no-print, .sidenav-menu, .topbar, footer, .modal-backdrop, .modal, .offcanvas, .btn, button {
                         display: none !important;
                     }
-                    #printable-attendance-report, #printable-attendance-report * {
-                        visibility: visible !important;
+
+                    /* Ana sarmalayıcıların görünürlüğünü koru (.wrapper display:none YAPILMAMALIDIR) */
+                    html, body, .wrapper, .page-content, .content-page, .content, .container-fluid {
+                        display: block !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        width: 100% !important;
+                        height: auto !important;
+                        overflow: visible !important;
+                        background: #ffffff !important;
                     }
+
+                    .print-only {
+                        display: block !important;
+                    }
+
                     #printable-attendance-report {
                         display: block !important;
-                        position: absolute !important;
-                        left: 0 !important;
-                        top: 0 !important;
+                        visibility: visible !important;
+                        position: static !important;
                         width: 100% !important;
                         margin: 0 !important;
-                        padding: 20px !important;
+                        padding: 10px !important;
                         background: #ffffff !important;
                         color: #000000 !important;
                     }
+
+                    #printable-attendance-report * {
+                        visibility: visible !important;
+                    }
+
+                    .print-table {
+                        width: 100% !important;
+                        border-collapse: collapse !important;
+                    }
+
                     .print-table th, .print-table td {
                         border: 1px solid #000000 !important;
                         color: #000000 !important;
+                        padding: 4px 6px !important;
                     }
+
+                    .print-table th {
+                        background-color: #f1f3f5 !important;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+
                     @page {
                         size: A4 portrait;
-                        margin: 1.5cm;
+                        margin: 12mm 10mm;
                     }
                 }
             `}</style>

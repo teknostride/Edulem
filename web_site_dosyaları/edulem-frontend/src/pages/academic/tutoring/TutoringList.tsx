@@ -245,9 +245,430 @@ const TutoringList = () => {
         }
     };
 
-    // Listeyi Yazdır
+    // Okul adını al
+    const getSchoolName = () => {
+        try {
+            const imp = localStorage.getItem('EDULEM_IMPERSONATION');
+            if (imp) {
+                const impData = JSON.parse(imp);
+                if (impData.tenant_name) return impData.tenant_name;
+            }
+            const ud = JSON.parse(localStorage.getItem('USER_DATA') || '{}');
+            if (ud.tenant_name) return ud.tenant_name;
+            if (ud.institution_name) return ud.institution_name;
+            if (ud.tenant?.name) return ud.tenant.name;
+            if (ud.school_name) return ud.school_name;
+            const cached = localStorage.getItem('TENANT_NAME') || localStorage.getItem('INSTITUTION_NAME');
+            if (cached) return cached;
+            if (typeof window !== 'undefined') {
+                const host = window.location.hostname.toLowerCase();
+                if (host.startsWith('akirfan.')) return 'AK İRFAN OKULLARI';
+                if (host.startsWith('demo.')) return 'DEMO OKUL';
+            }
+        } catch {}
+        return 'EDULEM EĞİTİM KURUMLARI';
+    };
+
+    // Güvenli ve Temiz Yazdırma (İzole Iframe)
+    const printHtml = (htmlContent: string) => {
+        let iframe = document.getElementById('edulem-print-frame') as HTMLIFrameElement;
+        if (!iframe) {
+            iframe = document.createElement('iframe');
+            iframe.id = 'edulem-print-frame';
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            iframe.style.visibility = 'hidden';
+            document.body.appendChild(iframe);
+        }
+
+        const doc = iframe.contentWindow?.document || iframe.contentDocument;
+        if (!doc) {
+            window.print();
+            return;
+        }
+
+        doc.open();
+        doc.write(htmlContent);
+        doc.close();
+
+        setTimeout(() => {
+            try {
+                iframe.contentWindow?.focus();
+                iframe.contentWindow?.print();
+            } catch {
+                window.print();
+            }
+        }, 300);
+    };
+
+    // Detay Modalı - Öğrenci Katılım ve Yoklama Listesini Yazdır
+    const handlePrintDetail = () => {
+        if (!selectedDetail) {
+            window.print();
+            return;
+        }
+
+        const schoolTitle = getSchoolName();
+        const dateStr = selectedDetail.date
+            ? new Date(selectedDetail.date).toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })
+            : '-';
+        const timeStr = `${selectedDetail.start_time ? (selectedDetail.start_time.length > 5 ? selectedDetail.start_time.substring(11, 16) || selectedDetail.start_time.substring(0, 5) : selectedDetail.start_time) : ''} - ${selectedDetail.end_time ? (selectedDetail.end_time.length > 5 ? selectedDetail.end_time.substring(11, 16) || selectedDetail.end_time.substring(0, 5) : selectedDetail.end_time) : ''}`;
+        const studentsList = filteredStudents.length > 0 ? filteredStudents : (selectedDetail.students || []);
+
+        const html = `<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <title>${selectedDetail.title} - Katılım Listesi</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 12mm 10mm;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #111;
+            background: #fff;
+            margin: 0;
+            padding: 8px;
+            font-size: 11px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #222;
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+        }
+        .header h1 {
+            font-size: 16px;
+            margin: 0 0 4px 0;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+        .header h2 {
+            font-size: 13px;
+            margin: 0 0 4px 0;
+            font-weight: 700;
+            color: #333;
+        }
+        .header .meta {
+            font-size: 10px;
+            color: #666;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+            border: 1px solid #999;
+        }
+        .info-table td {
+            padding: 5px 8px;
+            font-size: 11px;
+            border: 1px solid #ccc;
+        }
+        .info-table td.label {
+            font-weight: bold;
+            background: #f4f5f7 !important;
+            width: 18%;
+            color: #333;
+        }
+        .section-title {
+            font-size: 12px;
+            font-weight: 800;
+            margin: 14px 0 6px 0;
+            text-transform: uppercase;
+            display: flex;
+            justify-content: space-between;
+        }
+        table.list-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        table.list-table thead {
+            display: table-header-group;
+        }
+        table.list-table tr {
+            page-break-inside: avoid;
+        }
+        table.list-table th, table.list-table td {
+            border: 1px solid #333;
+            padding: 5px 7px;
+            font-size: 10.5px;
+        }
+        table.list-table th {
+            background-color: #f1f3f5 !important;
+            font-weight: 700;
+            text-align: left;
+        }
+        .text-center { text-align: center; }
+        .footer {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            page-break-inside: avoid;
+        }
+        .footer-col {
+            width: 45%;
+            text-align: center;
+        }
+        .footer-col .sig-space {
+            height: 45px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>${schoolTitle}</h1>
+        <h2>ETÜT VE ÖZEL DERS KATILIM ÇİZELGESİ</h2>
+        <div class="meta">Rapor Tarihi: ${new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+    </div>
+
+    <table class="info-table">
+        <tr>
+            <td class="label">Oturum:</td>
+            <td><strong>${selectedDetail.title || '-'}</strong></td>
+            <td class="label">Tarih:</td>
+            <td>${dateStr}</td>
+        </tr>
+        <tr>
+            <td class="label">Ders:</td>
+            <td>${selectedDetail.lesson?.name || '-'}</td>
+            <td class="label">Saat / Süre:</td>
+            <td>${timeStr}</td>
+        </tr>
+        <tr>
+            <td class="label">Öğretmen:</td>
+            <td>${selectedDetail.teacher?.name || '-'}</td>
+            <td class="label">Derslik / Tip:</td>
+            <td>${selectedDetail.room || 'Belirtilmedi'} (${selectedDetail.type_label || (selectedDetail.type === 'private_lesson' ? 'Özel Ders' : 'Grup Etüt')})</td>
+        </tr>
+        <tr>
+            <td class="label">Katılımcı:</td>
+            <td><strong>${studentsList.length} / ${selectedDetail.max_students || 'Limitsiz'} Öğrenci</strong></td>
+            <td class="label">ID:</td>
+            <td>#${selectedDetail.id}</td>
+        </tr>
+        ${selectedDetail.notes ? `
+        <tr>
+            <td class="label">Oturum Notları:</td>
+            <td colspan="3">${selectedDetail.notes}</td>
+        </tr>
+        ` : ''}
+    </table>
+
+    <div class="section-title">
+        <span>KATILAN ÖĞRENCİ LİSTESİ (${studentsList.length} ÖĞRENCİ)</span>
+    </div>
+    <table class="list-table">
+        <thead>
+            <tr>
+                <th style="width: 35px; text-align: center;">#</th>
+                <th style="width: 70px; text-align: center;">Okul No</th>
+                <th>Öğrenci Adı Soyadı</th>
+                <th style="width: 80px;">Sınıf</th>
+                <th style="width: 105px;">Telefon</th>
+                <th style="width: 155px;">Veli İletişim</th>
+                <th style="width: 75px; text-align: center;">Yoklama</th>
+                <th style="width: 75px; text-align: center;">İmza</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${studentsList.length === 0 ? `
+                <tr><td colspan="8" class="text-center" style="padding: 15px;">Kayıtlı öğrenci bulunamadı.</td></tr>
+            ` : studentsList.map((st, i) => {
+                const g = (st.guardians && st.guardians.length > 0) ? st.guardians[0] : null;
+                const guardianText = g ? `${g.name || 'Veli'} (${g.phone || '-'})` : '-';
+                return `
+                    <tr>
+                        <td class="text-center">${i + 1}</td>
+                        <td class="text-center"><strong>${st.school_no || '-'}</strong></td>
+                        <td><strong>${st.name || st.student_name || '-'}</strong></td>
+                        <td>${st.classroom?.name || st.classroom_name || '-'}</td>
+                        <td>${st.phone || '-'}</td>
+                        <td style="font-size: 10px;">${guardianText}</td>
+                        <td class="text-center">[ &nbsp; ] Geldi</td>
+                        <td></td>
+                    </tr>
+                `;
+            }).join('')}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <div class="footer-col">
+            <div><strong>Dersi Veren Öğretmen</strong></div>
+            <div style="margin-top: 4px;">${selectedDetail.teacher?.name || '-'}</div>
+            <div class="sig-space"></div>
+            <div>(İmza)</div>
+        </div>
+        <div class="footer-col">
+            <div><strong>Okul / Kurum Yönetimi</strong></div>
+            <div style="margin-top: 4px;">Onay</div>
+            <div class="sig-space"></div>
+            <div>(İmza / Mühür)</div>
+        </div>
+    </div>
+</body>
+</html>`;
+
+        printHtml(html);
+    };
+
+    // Genel Yoklama Raporunu Yazdır
+    const handlePrintReport = () => {
+        const schoolTitle = getSchoolName();
+        const html = `<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <title>Genel Etüt ve Yoklama Raporu</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 10mm 10mm;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            color: #111;
+            background: #fff;
+            margin: 0;
+            padding: 8px;
+            font-size: 11px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #222;
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+        }
+        .header h1 {
+            font-size: 17px;
+            margin: 0 0 4px 0;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+        .header h2 {
+            font-size: 13px;
+            margin: 0 0 4px 0;
+            font-weight: 700;
+            color: #333;
+        }
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 8px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+        }
+        .stat-item { text-align: center; }
+        .stat-label { font-size: 10px; color: #666; }
+        .stat-val { font-size: 14px; font-weight: bold; color: #111; }
+        table.list-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        table.list-table thead {
+            display: table-header-group;
+        }
+        table.list-table tr {
+            page-break-inside: avoid;
+        }
+        table.list-table th, table.list-table td {
+            border: 1px solid #333;
+            padding: 5px 6px;
+            font-size: 10px;
+        }
+        table.list-table th {
+            background-color: #f1f3f5 !important;
+            font-weight: bold;
+            text-align: left;
+        }
+        .text-center { text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>${schoolTitle}</h1>
+        <h2>GENEL ETÜT VE YOKLAMA RAPORU</h2>
+        <div style="font-size: 10px; color: #666;">Rapor Tarihi: ${new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat-item"><div class="stat-label">Toplam Etüt</div><div class="stat-val">${sessions.length}</div></div>
+        <div class="stat-item"><div class="stat-label">Yoklaması Alınan</div><div class="stat-val" style="color: green;">${sessions.filter(s => s.attendance_summary?.taken).length}</div></div>
+        <div class="stat-item"><div class="stat-label">Yoklama Bekleyen</div><div class="stat-val" style="color: orange;">${sessions.filter(s => !s.attendance_summary?.taken).length}</div></div>
+        <div class="stat-item"><div class="stat-label">Genel Katılım Oranı</div><div class="stat-val" style="color: #0d6efd;">%${computedReportAttendanceRate}</div></div>
+    </div>
+
+    <table class="list-table">
+        <thead>
+            <tr>
+                <th style="width: 35px; text-align: center;">ID</th>
+                <th>Etüt Oturumu</th>
+                <th>Öğretmen</th>
+                <th>Ders</th>
+                <th>Tarih / Saat</th>
+                <th style="text-align: center;">Kayıtlı</th>
+                <th style="text-align: center;">Yoklama Durumu</th>
+                <th style="text-align: center;">Katılım Dağılımı</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${sessions.map(s => {
+                const dateStr = s.date ? new Date(s.date).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+                const timeStr = `${s.start_time ? (s.start_time.length > 5 ? s.start_time.substring(11, 16) || s.start_time.substring(0, 5) : s.start_time) : ''} - ${s.end_time ? (s.end_time.length > 5 ? s.end_time.substring(11, 16) || s.end_time.substring(0, 5) : s.end_time) : ''}`;
+                const taken = s.attendance_summary?.taken;
+                const p = s.attendance_summary?.present || 0;
+                const a = s.attendance_summary?.absent || 0;
+                const l = s.attendance_summary?.late || 0;
+                return `
+                    <tr>
+                        <td class="text-center">#${s.id}</td>
+                        <td><strong>${s.title}</strong></td>
+                        <td>${s.teacher?.name || '-'}</td>
+                        <td>${s.lesson?.name || '-'}</td>
+                        <td>${dateStr} ${timeStr}</td>
+                        <td class="text-center">${s.students_count || 0} / ${s.max_students || 'Limitsiz'}</td>
+                        <td class="text-center">${taken ? 'ALINDI' : 'ALINMADI'}</td>
+                        <td class="text-center">${taken ? `${p} Geldi, ${a} Gelmedi, ${l} Geç` : '-'}</td>
+                    </tr>
+                `;
+            }).join('')}
+        </tbody>
+    </table>
+</body>
+</html>`;
+        printHtml(html);
+    };
+
+    // Listeyi Yazdır (Genel Fallback)
     const handlePrint = () => {
-        window.print();
+        if (selectedDetail) {
+            handlePrintDetail();
+        } else if (reportModalOpen) {
+            handlePrintReport();
+        } else {
+            window.print();
+        }
     };
 
     // İstatistik Değerleri
@@ -1133,33 +1554,61 @@ const TutoringList = () => {
                 }
 
                 @media print {
-                    body * {
-                        visibility: hidden !important;
-                    }
-                    .no-print, .sidenav-menu, .topbar, footer, .wrapper, .modal-backdrop {
+                    /* Menü, üst çubuk, modal ve no-print elementlerini gizle */
+                    .no-print, .sidenav-menu, .topbar, footer, .modal-backdrop, .modal, .offcanvas, .btn, button {
                         display: none !important;
                     }
-                    #printable-tutoring-sheet, #printable-tutoring-sheet * {
-                        visibility: visible !important;
+
+                    /* Ana sarmalayıcıların görünürlüğünü koru (.wrapper display:none YAPILMAMALIDIR) */
+                    html, body, .wrapper, .page-content, .content-page, .content, .container-fluid, .tutoring-page-container {
+                        display: block !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        width: 100% !important;
+                        height: auto !important;
+                        overflow: visible !important;
+                        background: #ffffff !important;
                     }
+
+                    .print-only {
+                        display: block !important;
+                    }
+
                     #printable-tutoring-sheet {
                         display: block !important;
-                        position: absolute !important;
-                        left: 0 !important;
-                        top: 0 !important;
+                        visibility: visible !important;
+                        position: static !important;
                         width: 100% !important;
                         margin: 0 !important;
-                        padding: 20px !important;
+                        padding: 10px !important;
                         background: #ffffff !important;
                         color: #000000 !important;
                     }
+
+                    #printable-tutoring-sheet * {
+                        visibility: visible !important;
+                    }
+
+                    .print-table {
+                        width: 100% !important;
+                        border-collapse: collapse !important;
+                    }
+
                     .print-table th, .print-table td {
                         border: 1px solid #000000 !important;
                         color: #000000 !important;
+                        padding: 4px 6px !important;
                     }
+
+                    .print-table th {
+                        background-color: #f1f3f5 !important;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+
                     @page {
                         size: A4 portrait;
-                        margin: 1.5cm;
+                        margin: 12mm 10mm;
                     }
                 }
             `}</style>
