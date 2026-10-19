@@ -72,6 +72,30 @@ const TutoringList = () => {
     const [selectedDetail, setSelectedDetail] = useState<TutoringSession | null>(null);
     const [studentSearch, setStudentSearch] = useState('');
 
+    // Çıktı / Yazdırma Ayarları Modal State
+    const [printModalOpen, setPrintModalOpen] = useState(false);
+    const [printOptions, setPrintOptions] = useState({
+        orientation: 'portrait' as 'portrait' | 'landscape',
+        includeHeader: true,
+        includeSessionInfo: true,
+        includeNotes: true,
+        includeSignatures: true,
+
+        // Sütunlar
+        colIndex: true,
+        colSchoolNo: true,
+        colName: true,
+        colClassroom: true,
+        colPhone: true,
+        colGuardian: true,
+        colAttendance: true,
+        colSignature: true,
+
+        // Kapsam
+        classroomFilter: 'ALL',
+        onlySearched: false,
+    });
+
     // Genel Yoklama Raporu Modal State
     const [reportModalOpen, setReportModalOpen] = useState(false);
 
@@ -282,8 +306,8 @@ const TutoringList = () => {
         printWindow.document.close();
     };
 
-    // Detay Modalı - Öğrenci Katılım ve Yoklama Listesini Yazdır
-    const handlePrintDetail = () => {
+    // Detay Modalı - Öğrenci Katılım ve Yoklama Listesini Yazdır (Seçilen Seçeneklerle)
+    const handlePrintDetail = (customOpts = printOptions) => {
         if (!selectedDetail) {
             window.print();
             return;
@@ -294,7 +318,48 @@ const TutoringList = () => {
             ? new Date(selectedDetail.date).toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })
             : '-';
         const timeStr = `${selectedDetail.start_time ? (selectedDetail.start_time.length > 5 ? selectedDetail.start_time.substring(11, 16) || selectedDetail.start_time.substring(0, 5) : selectedDetail.start_time) : ''} - ${selectedDetail.end_time ? (selectedDetail.end_time.length > 5 ? selectedDetail.end_time.substring(11, 16) || selectedDetail.end_time.substring(0, 5) : selectedDetail.end_time) : ''}`;
-        const studentsList = filteredStudents.length > 0 ? filteredStudents : (selectedDetail.students || []);
+
+        // Filtreleme (Kapsam)
+        let studentsList = (selectedDetail.students || []);
+        if (customOpts.onlySearched && studentSearch.trim()) {
+            studentsList = filteredStudents;
+        }
+        if (customOpts.classroomFilter !== 'ALL') {
+            studentsList = studentsList.filter(s => (s.classroom?.name || s.classroom_name || '') === customOpts.classroomFilter);
+        }
+
+        // Tablo Başlıkları
+        let ths = '';
+        let colCount = 0;
+        if (customOpts.colIndex) { ths += '<th style="width: 35px; text-align: center;">#</th>'; colCount++; }
+        if (customOpts.colSchoolNo) { ths += '<th style="width: 70px; text-align: center;">Okul No</th>'; colCount++; }
+        if (customOpts.colName) { ths += '<th>Öğrenci Adı Soyadı</th>'; colCount++; }
+        if (customOpts.colClassroom) { ths += '<th style="width: 80px;">Sınıf</th>'; colCount++; }
+        if (customOpts.colPhone) { ths += '<th style="width: 105px;">Telefon</th>'; colCount++; }
+        if (customOpts.colGuardian) { ths += '<th style="width: 160px;">Veli İletişim</th>'; colCount++; }
+        if (customOpts.colAttendance) { ths += '<th style="width: 75px; text-align: center;">Yoklama</th>'; colCount++; }
+        if (customOpts.colSignature) { ths += '<th style="width: 75px; text-align: center;">İmza</th>'; colCount++; }
+
+        // Satırlar
+        let rowsHtml = '';
+        if (studentsList.length === 0) {
+            rowsHtml = `<tr><td colspan="${colCount || 1}" class="text-center" style="padding: 18px; color: #64748b;">Seçilen kriterlere uygun öğrenci bulunamadı.</td></tr>`;
+        } else {
+            rowsHtml = studentsList.map((st, i) => {
+                const g = (st.guardians && st.guardians.length > 0) ? st.guardians[0] : null;
+                const guardianText = g ? `${g.name || 'Veli'} (${g.phone || '-'})` : '-';
+                let tds = '';
+                if (customOpts.colIndex) tds += `<td class="text-center">${i + 1}</td>`;
+                if (customOpts.colSchoolNo) tds += `<td class="text-center"><strong>${st.school_no || '-'}</strong></td>`;
+                if (customOpts.colName) tds += `<td><strong>${st.name || st.student_name || '-'}</strong></td>`;
+                if (customOpts.colClassroom) tds += `<td>${st.classroom?.name || st.classroom_name || '-'}</td>`;
+                if (customOpts.colPhone) tds += `<td>${st.phone || '-'}</td>`;
+                if (customOpts.colGuardian) tds += `<td style="font-size: 10px;">${guardianText}</td>`;
+                if (customOpts.colAttendance) tds += `<td class="text-center">[ &nbsp; ] Geldi</td>`;
+                if (customOpts.colSignature) tds += `<td></td>`;
+                return `<tr>${tds}</tr>`;
+            }).join('');
+        }
 
         const html = `<!DOCTYPE html>
 <html lang="tr">
@@ -303,7 +368,7 @@ const TutoringList = () => {
     <title>${selectedDetail.title} - Katılım Listesi</title>
     <style>
         @page {
-            size: A4 portrait;
+            size: A4 ${customOpts.orientation};
             margin: 12mm 10mm;
         }
         * {
@@ -434,6 +499,7 @@ const TutoringList = () => {
             height: 45px;
         }
     </style>
+</head>
 <body>
     <div class="no-print">
         <div>
@@ -443,12 +509,15 @@ const TutoringList = () => {
         <button class="btn-print" onclick="window.print()">🖨️ Sayfayı Yazdır / PDF İndir</button>
     </div>
 
+    ${customOpts.includeHeader ? `
     <div class="header">
         <h1>${schoolTitle}</h1>
         <h2>ETÜT VE ÖZEL DERS KATILIM ÇİZELGESİ</h2>
         <div class="meta">Rapor Tarihi: ${new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
     </div>
+    ` : ''}
 
+    ${customOpts.includeSessionInfo ? `
     <table class="info-table">
         <tr>
             <td class="label">Oturum:</td>
@@ -470,56 +539,32 @@ const TutoringList = () => {
         </tr>
         <tr>
             <td class="label">Katılımcı:</td>
-            <td><strong>${studentsList.length} / ${selectedDetail.max_students || 'Limitsiz'} Öğrenci</strong></td>
+            <td><strong>${studentsList.length} Öğrenci</strong></td>
             <td class="label">ID:</td>
             <td>#${selectedDetail.id}</td>
         </tr>
-        ${selectedDetail.notes ? `
+        ${(customOpts.includeNotes && selectedDetail.notes) ? `
         <tr>
             <td class="label">Oturum Notları:</td>
             <td colspan="3">${selectedDetail.notes}</td>
         </tr>
         ` : ''}
     </table>
+    ` : ''}
 
     <div class="section-title">
-        <span>KATILAN ÖĞRENCİ LİSTESİ (${studentsList.length} ÖĞRENCİ)</span>
+        <span>KATILAN ÖĞRENCİ LİSTESİ (${studentsList.length} ÖĞRENCİ${customOpts.classroomFilter !== 'ALL' ? ` - Sınıf: ${customOpts.classroomFilter}` : ''})</span>
     </div>
     <table class="list-table">
         <thead>
-            <tr>
-                <th style="width: 35px; text-align: center;">#</th>
-                <th style="width: 70px; text-align: center;">Okul No</th>
-                <th>Öğrenci Adı Soyadı</th>
-                <th style="width: 80px;">Sınıf</th>
-                <th style="width: 105px;">Telefon</th>
-                <th style="width: 155px;">Veli İletişim</th>
-                <th style="width: 75px; text-align: center;">Yoklama</th>
-                <th style="width: 75px; text-align: center;">İmza</th>
-            </tr>
+            <tr>${ths}</tr>
         </thead>
         <tbody>
-            ${studentsList.length === 0 ? `
-                <tr><td colspan="8" class="text-center" style="padding: 15px;">Kayıtlı öğrenci bulunamadı.</td></tr>
-            ` : studentsList.map((st, i) => {
-                const g = (st.guardians && st.guardians.length > 0) ? st.guardians[0] : null;
-                const guardianText = g ? `${g.name || 'Veli'} (${g.phone || '-'})` : '-';
-                return `
-                    <tr>
-                        <td class="text-center">${i + 1}</td>
-                        <td class="text-center"><strong>${st.school_no || '-'}</strong></td>
-                        <td><strong>${st.name || st.student_name || '-'}</strong></td>
-                        <td>${st.classroom?.name || st.classroom_name || '-'}</td>
-                        <td>${st.phone || '-'}</td>
-                        <td style="font-size: 10px;">${guardianText}</td>
-                        <td class="text-center">[ &nbsp; ] Geldi</td>
-                        <td></td>
-                    </tr>
-                `;
-            }).join('')}
+            ${rowsHtml}
         </tbody>
     </table>
 
+    ${customOpts.includeSignatures ? `
     <div class="footer">
         <div class="footer-col">
             <div><strong>Dersi Veren Öğretmen</strong></div>
@@ -534,6 +579,8 @@ const TutoringList = () => {
             <div>(İmza / Mühür)</div>
         </div>
     </div>
+    ` : ''}
+
     <script>
         window.onload = function() {
             setTimeout(function() {
@@ -546,6 +593,7 @@ const TutoringList = () => {
 </html>`;
 
         printHtml(html);
+        setPrintModalOpen(false);
     };
 
     // Genel Yoklama Raporunu Yazdır
@@ -686,7 +734,7 @@ const TutoringList = () => {
     // Listeyi Yazdır (Genel Fallback)
     const handlePrint = () => {
         if (selectedDetail) {
-            handlePrintDetail();
+            setPrintModalOpen(true);
         } else if (reportModalOpen) {
             handlePrintReport();
         } else {
@@ -1406,6 +1454,311 @@ const TutoringList = () => {
                     </div>
                 )}
             </div>
+
+            {/* ÇIKTI VE YAZDIRMA AYARLARI MODALI */}
+            {printModalOpen && selectedDetail && (
+                <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.65)', zIndex: 1070 }}>
+                    <div className="modal-dialog modal-lg modal-dialog-centered">
+                        <div className="modal-content shadow-lg border-0 rounded-4 overflow-hidden">
+                            <div className="modal-header bg-primary text-white py-3 px-4">
+                                <div className="d-flex align-items-center gap-2">
+                                    <div className="avatar-xs bg-white text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm">
+                                        <i className="ti ti-printer fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <h5 className="modal-title fw-bold text-white mb-0">Çıktı & Yazdırma Seçenekleri</h5>
+                                        <small className="text-white-50">{selectedDetail.title} &bull; Toplam {selectedDetail.students?.length || 0} Öğrenci</small>
+                                    </div>
+                                </div>
+                                <button type="button" className="btn-close btn-close-white" onClick={() => setPrintModalOpen(false)}></button>
+                            </div>
+
+                            <div className="modal-body p-4 bg-light bg-opacity-50">
+                                <div className="row g-3">
+                                    {/* 1. Sayfa Düzeni ve Kapsam */}
+                                    <div className="col-md-6">
+                                        <div className="card border-0 shadow-sm rounded-3 h-100">
+                                            <div className="card-body">
+                                                <h6 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                                                    <i className="ti ti-layout-board text-primary"></i> Sayfa ve Kapsam
+                                                </h6>
+                                                
+                                                <label className="form-label small fw-semibold text-muted">Sayfa Yönü (Oryantasyon)</label>
+                                                <div className="d-flex gap-2 mb-3">
+                                                    <button
+                                                        type="button"
+                                                        className={`btn btn-sm flex-fill d-flex align-items-center justify-content-center gap-1 ${printOptions.orientation === 'portrait' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                                                        onClick={() => setPrintOptions(prev => ({ ...prev, orientation: 'portrait' }))}
+                                                    >
+                                                        <i className="ti ti-file-text"></i> Dikey (A4)
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className={`btn btn-sm flex-fill d-flex align-items-center justify-content-center gap-1 ${printOptions.orientation === 'landscape' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                                                        onClick={() => setPrintOptions(prev => ({ ...prev, orientation: 'landscape' }))}
+                                                    >
+                                                        <i className="ti ti-file-analytics"></i> Yatay (A4)
+                                                    </button>
+                                                </div>
+
+                                                <label className="form-label small fw-semibold text-muted">Sınıf Filtresi</label>
+                                                <select
+                                                    className="form-select form-select-sm mb-2"
+                                                    value={printOptions.classroomFilter}
+                                                    onChange={e => setPrintOptions(prev => ({ ...prev, classroomFilter: e.target.value }))}
+                                                >
+                                                    <option value="ALL">Tüm Sınıflar ({selectedDetail.students?.length || 0} Öğrenci)</option>
+                                                    {Array.from(new Set((selectedDetail.students || []).map(s => s.classroom?.name || s.classroom_name || '').filter(Boolean))).sort().map(cls => {
+                                                        const count = (selectedDetail.students || []).filter(s => (s.classroom?.name || s.classroom_name || '') === cls).length;
+                                                        return <option key={cls} value={cls}>Sadece {cls} ({count} Öğrenci)</option>;
+                                                    })}
+                                                </select>
+
+                                                {studentSearch.trim() && (
+                                                    <div className="form-check form-switch mt-2">
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="checkbox"
+                                                            id="chkOnlySearched"
+                                                            checked={printOptions.onlySearched}
+                                                            onChange={e => setPrintOptions(prev => ({ ...prev, onlySearched: e.target.checked }))}
+                                                        />
+                                                        <label className="form-check-label small" htmlFor="chkOnlySearched">
+                                                            Arama sonucundaki öğrencileri yazdır ({filteredStudents.length} Öğrenci)
+                                                        </label>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 2. Başlık ve Bilgi Alanları */}
+                                    <div className="col-md-6">
+                                        <div className="card border-0 shadow-sm rounded-3 h-100">
+                                            <div className="card-body">
+                                                <h6 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                                                    <i className="ti ti-info-circle text-primary"></i> Başlık ve Ek Alanlar
+                                                </h6>
+                                                
+                                                <div className="d-flex flex-column gap-2">
+                                                    <div className="form-check form-switch">
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="checkbox"
+                                                            id="chkHeader"
+                                                            checked={printOptions.includeHeader}
+                                                            onChange={e => setPrintOptions(prev => ({ ...prev, includeHeader: e.target.checked }))}
+                                                        />
+                                                        <label className="form-check-label small fw-medium" htmlFor="chkHeader">
+                                                            Okul / Kurum Başlığı & Tarih
+                                                        </label>
+                                                    </div>
+
+                                                    <div className="form-check form-switch">
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="checkbox"
+                                                            id="chkSessionInfo"
+                                                            checked={printOptions.includeSessionInfo}
+                                                            onChange={e => setPrintOptions(prev => ({ ...prev, includeSessionInfo: e.target.checked }))}
+                                                        />
+                                                        <label className="form-check-label small fw-medium" htmlFor="chkSessionInfo">
+                                                            Etüt Özeti (Öğretmen, Saat, Salon)
+                                                        </label>
+                                                    </div>
+
+                                                    <div className="form-check form-switch">
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="checkbox"
+                                                            id="chkNotes"
+                                                            checked={printOptions.includeNotes}
+                                                            onChange={e => setPrintOptions(prev => ({ ...prev, includeNotes: e.target.checked }))}
+                                                        />
+                                                        <label className="form-check-label small fw-medium" htmlFor="chkNotes">
+                                                            Oturum Notları (Varsa)
+                                                        </label>
+                                                    </div>
+
+                                                    <div className="form-check form-switch">
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="checkbox"
+                                                            id="chkSignatures"
+                                                            checked={printOptions.includeSignatures}
+                                                            onChange={e => setPrintOptions(prev => ({ ...prev, includeSignatures: e.target.checked }))}
+                                                        />
+                                                        <label className="form-check-label small fw-medium" htmlFor="chkSignatures">
+                                                            Alt İmza ve Mühür Kutuları
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 3. Tablo Sütunları */}
+                                    <div className="col-12">
+                                        <div className="card border-0 shadow-sm rounded-3">
+                                            <div className="card-body">
+                                                <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                                                    <h6 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                                                        <i className="ti ti-table text-primary"></i> Tabloda Görünecek Sütunlar
+                                                    </h6>
+                                                    <div className="btn-group btn-group-sm">
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-outline-primary btn-sm py-0 px-2"
+                                                            onClick={() => setPrintOptions(prev => ({
+                                                                ...prev,
+                                                                colIndex: true, colSchoolNo: true, colName: true, colClassroom: true,
+                                                                colPhone: true, colGuardian: true, colAttendance: true, colSignature: true
+                                                            }))}
+                                                        >
+                                                            Tümünü Seç
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-outline-secondary btn-sm py-0 px-2"
+                                                            onClick={() => setPrintOptions(prev => ({
+                                                                ...prev,
+                                                                colIndex: true, colSchoolNo: true, colName: true, colClassroom: true,
+                                                                colPhone: false, colGuardian: false, colAttendance: true, colSignature: true
+                                                            }))}
+                                                        >
+                                                            Sadece Yoklama
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-outline-secondary btn-sm py-0 px-2"
+                                                            onClick={() => setPrintOptions(prev => ({
+                                                                ...prev,
+                                                                colIndex: true, colSchoolNo: true, colName: true, colClassroom: true,
+                                                                colPhone: true, colGuardian: true, colAttendance: false, colSignature: false
+                                                            }))}
+                                                        >
+                                                            İletişim Listesi
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="row g-2">
+                                                    <div className="col-md-3 col-6">
+                                                        <label className="d-flex align-items-center gap-2 p-2 rounded bg-light border cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="form-check-input mt-0"
+                                                                checked={printOptions.colIndex}
+                                                                onChange={e => setPrintOptions(prev => ({ ...prev, colIndex: e.target.checked }))}
+                                                            />
+                                                            <span className="small fw-medium"># Sıra No</span>
+                                                        </label>
+                                                    </div>
+                                                    <div className="col-md-3 col-6">
+                                                        <label className="d-flex align-items-center gap-2 p-2 rounded bg-light border cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="form-check-input mt-0"
+                                                                checked={printOptions.colSchoolNo}
+                                                                onChange={e => setPrintOptions(prev => ({ ...prev, colSchoolNo: e.target.checked }))}
+                                                            />
+                                                            <span className="small fw-medium">Okul Numarası</span>
+                                                        </label>
+                                                    </div>
+                                                    <div className="col-md-3 col-6">
+                                                        <label className="d-flex align-items-center gap-2 p-2 rounded bg-light border">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="form-check-input mt-0"
+                                                                checked={printOptions.colName}
+                                                                disabled
+                                                            />
+                                                            <span className="small fw-medium">Öğrenci Adı Soyadı</span>
+                                                        </label>
+                                                    </div>
+                                                    <div className="col-md-3 col-6">
+                                                        <label className="d-flex align-items-center gap-2 p-2 rounded bg-light border cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="form-check-input mt-0"
+                                                                checked={printOptions.colClassroom}
+                                                                onChange={e => setPrintOptions(prev => ({ ...prev, colClassroom: e.target.checked }))}
+                                                            />
+                                                            <span className="small fw-medium">Sınıf / Şube</span>
+                                                        </label>
+                                                    </div>
+                                                    <div className="col-md-3 col-6">
+                                                        <label className="d-flex align-items-center gap-2 p-2 rounded bg-light border cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="form-check-input mt-0"
+                                                                checked={printOptions.colPhone}
+                                                                onChange={e => setPrintOptions(prev => ({ ...prev, colPhone: e.target.checked }))}
+                                                            />
+                                                            <span className="small fw-medium">Öğrenci Telefonu</span>
+                                                        </label>
+                                                    </div>
+                                                    <div className="col-md-3 col-6">
+                                                        <label className="d-flex align-items-center gap-2 p-2 rounded bg-light border cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="form-check-input mt-0"
+                                                                checked={printOptions.colGuardian}
+                                                                onChange={e => setPrintOptions(prev => ({ ...prev, colGuardian: e.target.checked }))}
+                                                            />
+                                                            <span className="small fw-medium">Veli İletişim (Adı & Tel)</span>
+                                                        </label>
+                                                    </div>
+                                                    <div className="col-md-3 col-6">
+                                                        <label className="d-flex align-items-center gap-2 p-2 rounded bg-light border cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="form-check-input mt-0"
+                                                                checked={printOptions.colAttendance}
+                                                                onChange={e => setPrintOptions(prev => ({ ...prev, colAttendance: e.target.checked }))}
+                                                            />
+                                                            <span className="small fw-medium">Yoklama [ ] Geldi</span>
+                                                        </label>
+                                                    </div>
+                                                    <div className="col-md-3 col-6">
+                                                        <label className="d-flex align-items-center gap-2 p-2 rounded bg-light border cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="form-check-input mt-0"
+                                                                checked={printOptions.colSignature}
+                                                                onChange={e => setPrintOptions(prev => ({ ...prev, colSignature: e.target.checked }))}
+                                                            />
+                                                            <span className="small fw-medium">İmza Sütunu</span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between">
+                                <button
+                                    type="button"
+                                    className="btn btn-outline-secondary"
+                                    onClick={() => setPrintModalOpen(false)}
+                                >
+                                    Vazgeç
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-success fw-bold px-4 d-flex align-items-center gap-2 shadow-sm"
+                                    onClick={() => handlePrintDetail(printOptions)}
+                                >
+                                    <i className="ti ti-printer fs-5"></i>
+                                    <span>Seçilenlerle Yazdır / PDF Al</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* GENEL YOKLAMA RAPORU MODALI (Yöneticiler için) */}
             {reportModalOpen && (
