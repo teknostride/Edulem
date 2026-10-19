@@ -269,40 +269,17 @@ const TutoringList = () => {
         return 'EDULEM EĞİTİM KURUMLARI';
     };
 
-    // Güvenli ve Temiz Yazdırma (İzole Iframe)
+    // Güvenli ve Temiz Yazdırma (Ayrı Sekmede %100 Çıktı Garantisi)
     const printHtml = (htmlContent: string) => {
-        let iframe = document.getElementById('edulem-print-frame') as HTMLIFrameElement;
-        if (!iframe) {
-            iframe = document.createElement('iframe');
-            iframe.id = 'edulem-print-frame';
-            iframe.style.position = 'fixed';
-            iframe.style.right = '0';
-            iframe.style.bottom = '0';
-            iframe.style.width = '0';
-            iframe.style.height = '0';
-            iframe.style.border = '0';
-            iframe.style.visibility = 'hidden';
-            document.body.appendChild(iframe);
-        }
-
-        const doc = iframe.contentWindow?.document || iframe.contentDocument;
-        if (!doc) {
-            window.print();
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            alert('Yazdırma penceresi açılamadı. Lütfen tarayıcınızın adres çubuğundaki açılır pencere (popup) engelini kaldırıp tekrar deneyin.');
             return;
         }
 
-        doc.open();
-        doc.write(htmlContent);
-        doc.close();
-
-        setTimeout(() => {
-            try {
-                iframe.contentWindow?.focus();
-                iframe.contentWindow?.print();
-            } catch {
-                window.print();
-            }
-        }, 300);
+        printWindow.document.open();
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
     };
 
     // Detay Modalı - Öğrenci Katılım ve Yoklama Listesini Yazdır
@@ -339,8 +316,39 @@ const TutoringList = () => {
             color: #111;
             background: #fff;
             margin: 0;
-            padding: 8px;
+            padding: 12px;
             font-size: 11px;
+        }
+        .no-print {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 8px;
+            padding: 10px 16px;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .btn-print {
+            background: #16a34a;
+            color: #fff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .btn-print:hover {
+            background: #15803d;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                padding: 0 !important;
+            }
         }
         .header {
             text-align: center;
@@ -426,8 +434,15 @@ const TutoringList = () => {
             height: 45px;
         }
     </style>
-</head>
 <body>
+    <div class="no-print">
+        <div>
+            <strong style="color: #15803d; font-size: 13px;">Etüt ve Yoklama Listesi Çıktı Ekranı</strong>
+            <div style="color: #166534; font-size: 11px;">Yazdırma penceresi otomatik açılır. Kapatırsanız veya açılmazsa butona tıklayabilirsiniz.</div>
+        </div>
+        <button class="btn-print" onclick="window.print()">🖨️ Sayfayı Yazdır / PDF İndir</button>
+    </div>
+
     <div class="header">
         <h1>${schoolTitle}</h1>
         <h2>ETÜT VE ÖZEL DERS KATILIM ÇİZELGESİ</h2>
@@ -519,6 +534,14 @@ const TutoringList = () => {
             <div>(İmza / Mühür)</div>
         </div>
     </div>
+    <script>
+        window.onload = function() {
+            setTimeout(function() {
+                window.focus();
+                window.print();
+            }, 300);
+        };
+    </script>
 </body>
 </html>`;
 
