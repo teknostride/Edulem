@@ -4,6 +4,7 @@ import { getDashboardRouteByRole, getRoleLabel, normalizeRole } from '../../util
 import { confirmDialog } from '../../utils/toast';
 import logo from '../../assets/logo.jpeg';
 import axiosClient from '../../api/axiosClient';
+import { getAvatarUrl, handleAvatarError } from '../../utils/media';
 
 const Sidebar = () => {
     // --- 1. DURUMLAR (STATE) ---
@@ -627,7 +628,8 @@ const Sidebar = () => {
                         <div>
                             <Link to="/profile" className="link-reset">
                                 <img
-                                    src={userData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'Kullanıcı')}&background=random`}
+                                    src={getAvatarUrl(userData.avatar, userData.name || 'Kullanıcı')}
+                                    onError={(e) => handleAvatarError(e, userData.name || 'Kullanıcı')}
                                     alt="user-image"
                                     className="rounded-circle mb-2 avatar-md"
                                     style={{ objectFit: 'cover' }}

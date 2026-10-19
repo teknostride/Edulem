@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axiosClient from '../../../api/axiosClient';
 import { showToast } from '../../../utils/toast';
+import { getLogoUrl, handleLogoError } from '../../../utils/media';
 import Cropper from 'react-easy-crop';
 interface Institution {
   id: number;
@@ -502,7 +503,8 @@ const InstitutionSettings = () => {
                   >
                     {(logoPreviewUrl || institution.logo_url) ? (
                       <img
-                        src={logoPreviewUrl ?? (institution.logo_url ?? '')}
+                        src={logoPreviewUrl ?? getLogoUrl(institution.logo_url)}
+                        onError={handleLogoError}
                         alt="logo"
                         style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                       />

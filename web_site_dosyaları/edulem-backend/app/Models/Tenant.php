@@ -41,6 +41,33 @@ class Tenant extends Model
         ];
     }
 
+    protected $appends = [
+        'logo_url',
+    ];
+
+    public function getLogoUrlAttribute(): ?string
+    {
+        if (empty($this->logo_path)) {
+            return null;
+        }
+        $raw = trim($this->logo_path);
+        if (str_starts_with($raw, 'http://') || str_starts_with($raw, 'https://')) {
+            if (str_starts_with($raw, 'http://api.edulem.com')) {
+                return 'https://' . substr($raw, 7);
+            }
+            return $raw;
+        }
+        $clean = ltrim($raw, '/');
+        if (!str_starts_with($clean, 'storage/')) {
+            $clean = 'storage/' . $clean;
+        }
+        $baseUrl = rtrim(config('app.url') ?: 'https://api.edulem.com', '/');
+        if (str_contains($baseUrl, 'edulem.com') && str_starts_with($baseUrl, 'http://')) {
+            $baseUrl = 'https://' . substr($baseUrl, 7);
+        }
+        return $baseUrl . '/' . $clean;
+    }
+
     /**
      * Get the users for the tenant.
      *

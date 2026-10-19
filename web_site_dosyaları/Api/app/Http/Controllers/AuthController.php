@@ -211,8 +211,19 @@ class AuthController extends Controller
 
         $avatarUrl = null;
         if (! empty($user->avatar)) {
-            $baseUrl = rtrim($request->getSchemeAndHttpHost() . $request->getBasePath(), '/');
-            $avatarUrl = $baseUrl . '/' . ltrim($user->avatar, '/');
+            $rawAvatar = trim($user->avatar);
+            if (str_starts_with($rawAvatar, 'http://') || str_starts_with($rawAvatar, 'https://')) {
+                $avatarUrl = $rawAvatar;
+                if (str_starts_with($avatarUrl, 'http://api.edulem.com')) {
+                    $avatarUrl = 'https://' . substr($avatarUrl, 7);
+                }
+            } else {
+                $baseUrl = rtrim(config('app.url') ?: 'https://api.edulem.com', '/');
+                if (str_contains($baseUrl, 'edulem.com') && str_starts_with($baseUrl, 'http://')) {
+                    $baseUrl = 'https://' . substr($baseUrl, 7);
+                }
+                $avatarUrl = $baseUrl . '/' . ltrim($rawAvatar, '/');
+            }
         }
 
         $tenantName = null;
@@ -359,8 +370,19 @@ class AuthController extends Controller
 
         $avatarUrl = null;
         if (! empty($user->avatar)) {
-            $baseUrl = rtrim($request->getSchemeAndHttpHost() . $request->getBasePath(), '/');
-            $avatarUrl = $baseUrl . '/' . ltrim($user->avatar, '/');
+            $rawAvatar = trim($user->avatar);
+            if (str_starts_with($rawAvatar, 'http://') || str_starts_with($rawAvatar, 'https://')) {
+                $avatarUrl = $rawAvatar;
+                if (str_starts_with($avatarUrl, 'http://api.edulem.com')) {
+                    $avatarUrl = 'https://' . substr($avatarUrl, 7);
+                }
+            } else {
+                $baseUrl = rtrim(config('app.url') ?: 'https://api.edulem.com', '/');
+                if (str_contains($baseUrl, 'edulem.com') && str_starts_with($baseUrl, 'http://')) {
+                    $baseUrl = 'https://' . substr($baseUrl, 7);
+                }
+                $avatarUrl = $baseUrl . '/' . ltrim($rawAvatar, '/');
+            }
         }
 
         return response()->json([

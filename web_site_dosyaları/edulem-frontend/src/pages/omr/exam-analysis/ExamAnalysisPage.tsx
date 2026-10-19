@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import axiosClient from '../../../api/axiosClient';
 import { showToast } from '../../../utils/toast';
+import { getLogoUrl } from '../../../utils/media';
 import ExamDataGrid from './components/ExamDataGrid';
 import ModeToggle from './components/ModeToggle';
 import type { DetailedMode } from './components/ModeToggle';
@@ -322,7 +323,7 @@ export default function ExamAnalysisPage() {
         const p = r?.data?.data;
         setTenantProfile({
           name: p?.name,
-          logo_url: p?.logo_url ?? null,
+          logo_url: p?.logo_url ? getLogoUrl(p.logo_url) : null,
         });
       } catch {
         setTenantProfile(null);

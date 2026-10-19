@@ -54,7 +54,23 @@ class TenantController extends ApiController
 
             $logoUrl = null;
             if (!empty($tenant->logo_path)) {
-                $logoUrl = Storage::disk('public')->url($tenant->logo_path);
+                $rawLogo = trim($tenant->logo_path);
+                if (str_starts_with($rawLogo, 'http://') || str_starts_with($rawLogo, 'https://')) {
+                    $logoUrl = $rawLogo;
+                    if (str_starts_with($logoUrl, 'http://api.edulem.com')) {
+                        $logoUrl = 'https://' . substr($logoUrl, 7);
+                    }
+                } else {
+                    $clean = ltrim($rawLogo, '/');
+                    if (!str_starts_with($clean, 'storage/')) {
+                        $clean = 'storage/' . $clean;
+                    }
+                    $baseUrl = rtrim(config('app.url') ?: 'https://api.edulem.com', '/');
+                    if (str_contains($baseUrl, 'edulem.com') && str_starts_with($baseUrl, 'http://')) {
+                        $baseUrl = 'https://' . substr($baseUrl, 7);
+                    }
+                    $logoUrl = $baseUrl . '/' . $clean;
+                }
             }
 
             $setting = Setting::first();
@@ -104,8 +120,21 @@ class TenantController extends ApiController
 
             if ($request->hasFile('logo')) {
                 $file = $request->file('logo');
-                $path = $file->store('tenant-logos/' . $tenant->id, 'public');
-                $validated['logo_path'] = $path;
+                $ext = $file->getClientOriginalExtension() ?: 'png';
+                $filename = 'logo_' . uniqid() . '.' . $ext;
+                $relativePath = 'tenant-logos/' . $tenant->id . '/' . $filename;
+
+                // 1. Storage diskine kaydet (storage/app/public)
+                $file->storeAs('tenant-logos/' . $tenant->id, $filename, 'public');
+
+                // 2. Doğrudan public/storage içine de kopyala (symlink olmayan paylaşımlı Plesk için)
+                $directDir = public_path('storage/tenant-logos/' . $tenant->id);
+                if (!is_dir($directDir)) {
+                    @mkdir($directDir, 0775, true);
+                }
+                @copy(storage_path('app/public/' . $relativePath), $directDir . '/' . $filename);
+
+                $validated['logo_path'] = 'tenant-logos/' . $tenant->id . '/' . $filename;
             }
 
             // Sürüm bilgileri varsa settings tablosunda güncelle

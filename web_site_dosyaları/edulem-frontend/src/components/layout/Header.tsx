@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import { getRoleLabel } from '../../utils/roleRouting';
+import { getAvatarUrl, handleAvatarError } from '../../utils/media';
 
 const Header = () => {
   const navigate = useNavigate();
@@ -627,10 +628,11 @@ const Header = () => {
                 <img
                   src={isPortalMode && studentDisplayName
                     ? `https://ui-avatars.com/api/?name=${encodeURIComponent(studentDisplayName)}&background=0D8ABC&color=fff`
-                    : userProfile.avatar}
+                    : getAvatarUrl(userProfile.avatar, userProfile.name)}
+                  onError={(e) => handleAvatarError(e, isPortalMode ? (studentDisplayName || 'Öğrenci') : userProfile.name)}
                   width="32"
                   height="32"
-                  className="rounded-circle me-lg-2 d-flex"
+                  className="rounded-circle me-lg-2 d-flex object-fit-cover"
                   alt="user-image"
                 />
                 <div className="d-lg-flex align-items-center gap-1 d-none">

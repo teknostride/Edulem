@@ -77,6 +77,25 @@ class User extends Authenticatable
         ];
     }
 
+    public function getAvatarAttribute($value)
+    {
+        if (empty($value)) {
+            return null;
+        }
+        $raw = trim($value);
+        if (str_starts_with($raw, 'http://') || str_starts_with($raw, 'https://')) {
+            if (str_starts_with($raw, 'http://api.edulem.com')) {
+                return 'https://' . substr($raw, 7);
+            }
+            return $raw;
+        }
+        $baseUrl = rtrim(config('app.url') ?: 'https://api.edulem.com', '/');
+        if (str_contains($baseUrl, 'edulem.com') && str_starts_with($baseUrl, 'http://')) {
+            $baseUrl = 'https://' . substr($baseUrl, 7);
+        }
+        return $baseUrl . '/' . ltrim($raw, '/');
+    }
+
     /**
      * JSON alanları (subjects, campus_ids, education_level_ids) veritabanına
      * Türkçe karakterler escape edilmeden (Beden Eğitimi, Müzik) yazılsın.

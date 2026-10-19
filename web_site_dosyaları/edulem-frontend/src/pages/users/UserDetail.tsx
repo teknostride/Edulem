@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import axiosClient from '../../api/axiosClient';
 import { showToast } from '../../utils/toast';
 import { isTeacher, getMyUserId, isFounderOrOwner, getMyRole } from '../../utils/userScope';
+import { getAvatarUrl, handleAvatarError } from '../../utils/media';
 
 interface PermissionItem {
   id: number;
@@ -287,7 +288,12 @@ const UserDetail = ({ userId }: { userId: number }) => {
                 style={{ width: '84px', height: '84px', fontSize: '28px', fontWeight: 600 }}
               >
                 {user.avatar ? (
-                  <img src={user.avatar} alt="avatar" className="rounded-circle w-100 h-100 object-fit-cover" />
+                  <img
+                    src={getAvatarUrl(user.avatar, `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Kullanıcı')}
+                    onError={(e) => handleAvatarError(e, `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Kullanıcı')}
+                    alt="avatar"
+                    className="rounded-circle w-100 h-100 object-fit-cover"
+                  />
                 ) : (
                   <span>
                     {(user.first_name || '').substring(0, 1)}

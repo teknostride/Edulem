@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import { confirmDialog, showToast } from '../../utils/toast';
+import { getAvatarUrl, handleAvatarError } from '../../utils/media';
 import Cropper from 'react-easy-crop';
 
 interface UserProfile {
@@ -790,9 +791,10 @@ const Profile = () => {
             <div className="card-body text-center">
               <div className="position-relative d-inline-block">
                 <img
-                  src={(isEditing ? (formData?.avatar || profile?.avatar) : profile?.avatar) || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.name || 'Kullanıcı')}&background=random`}
+                  src={getAvatarUrl(isEditing ? (formData?.avatar || profile?.avatar) : profile?.avatar, profile?.name || 'Kullanıcı')}
+                  onError={(e) => handleAvatarError(e, profile?.name || 'Kullanıcı')}
                   alt="Profile"
-                  className="rounded-circle avatar-xl mb-3"
+                  className="rounded-circle avatar-xl mb-3 shadow-sm"
                   style={{ width: '120px', height: '120px', objectFit: 'cover' }}
                 />
                 {isEditing && avatarProcessing && (
