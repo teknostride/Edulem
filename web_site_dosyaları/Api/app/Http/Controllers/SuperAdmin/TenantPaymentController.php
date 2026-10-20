@@ -67,23 +67,40 @@ class TenantPaymentController extends ApiController
     /**
      * Add a payment installment for a tenant.
      */
-    public function store(Request $request): JsonResponse
+    public function store($param1 = null, $param2 = null): JsonResponse
     {
         try {
+            $request = ($param1 instanceof Request) ? $param1 : (($param2 instanceof Request) ? $param2 : request());
+            $tenantId = !($param1 instanceof Request) && $param1 !== null 
+                ? $param1 
+                : (!($param2 instanceof Request) && $param2 !== null ? $param2 : ($request->input('tenant_id') ?? $request->route('tenantId') ?? $request->route('tenant_id')));
+
+            if ($tenantId) {
+                $request->merge(['tenant_id' => (int) $tenantId]);
+            }
+
             $request->validate([
                 'tenant_id' => 'required|exists:tenants,id',
                 'title' => 'required|string|max:255',
                 'amount' => 'required|numeric|min:1',
                 'due_date' => 'required|date',
+                'payment_method' => 'nullable|string',
+                'status' => 'nullable|string|in:pending,paid,overdue,cancelled',
                 'notes' => 'nullable|string',
             ]);
+
+            $status = $request->status ?: 'pending';
+            $amount = (float) $request->amount;
 
             $payment = TenantPayment::create([
                 'tenant_id' => $request->tenant_id,
                 'title' => trim($request->title),
-                'amount' => $request->amount,
+                'amount' => $amount,
                 'due_date' => $request->due_date,
-                'status' => 'pending',
+                'status' => $status,
+                'payment_method' => $request->payment_method ?: 'bank_transfer',
+                'paid_amount' => ($status === 'paid') ? $amount : 0,
+                'paid_at' => ($status === 'paid') ? now()->toDateString() : null,
                 'notes' => $request->notes,
             ]);
 

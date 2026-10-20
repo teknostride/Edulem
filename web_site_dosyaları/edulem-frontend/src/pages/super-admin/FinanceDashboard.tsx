@@ -27,6 +27,12 @@ interface PaymentRecord {
   };
 }
 
+interface TenantOption {
+  id: number;
+  name: string;
+  domain: string;
+}
+
 const FinanceDashboard = () => {
   const [summary, setSummary] = useState<FinanceSummary>({
     total_contract_volume: 0,
@@ -35,13 +41,83 @@ const FinanceDashboard = () => {
     total_overdue: 0,
   });
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [tenants, setTenants] = useState<TenantOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'paid' | 'overdue'>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Yeni Taksit / Gelir Ekle Modal
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [newPayment, setNewPayment] = useState({
+    tenant_id: '',
+    title: '',
+    amount: '',
+    due_date: new Date().toISOString().substring(0, 10),
+    payment_method: 'bank_transfer',
+    status: 'pending' as 'pending' | 'paid',
+    notes: '',
+  });
+
   useEffect(() => {
     fetchFinanceData();
+    fetchTenants();
   }, []);
+
+  const fetchTenants = async () => {
+    try {
+      const res = await axiosClient.get('/super-admin/tenants', { params: { per_page: 200 } });
+      setTenants(res.data.data?.tenants || []);
+    } catch (error) {
+      console.error('Kurumlar yüklenemedi:', error);
+    }
+  };
+
+  const handleCreatePayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPayment.tenant_id) {
+      showToast('error', 'Lütfen bir kurum (okul) seçiniz.');
+      return;
+    }
+    if (!newPayment.title.trim()) {
+      showToast('error', 'Lütfen taksit / ödeme başlığı giriniz.');
+      return;
+    }
+    if (!newPayment.amount || Number(newPayment.amount) <= 0) {
+      showToast('error', 'Lütfen geçerli bir tutar giriniz.');
+      return;
+    }
+
+    try {
+      setCreateLoading(true);
+      await axiosClient.post('/super-admin/payments', {
+        tenant_id: Number(newPayment.tenant_id),
+        title: newPayment.title.trim(),
+        amount: Number(newPayment.amount),
+        due_date: newPayment.due_date,
+        payment_method: newPayment.payment_method,
+        status: newPayment.status,
+        notes: newPayment.notes,
+      });
+
+      showToast('success', 'Gelir / Taksit kaydı başarıyla oluşturuldu.');
+      setShowPaymentModal(false);
+      setNewPayment({
+        tenant_id: '',
+        title: '',
+        amount: '',
+        due_date: new Date().toISOString().substring(0, 10),
+        payment_method: 'bank_transfer',
+        status: 'pending',
+        notes: '',
+      });
+      fetchFinanceData();
+    } catch (error: any) {
+      showToast('error', error.response?.data?.message || 'Kayıt eklenemedi.');
+    } finally {
+      setCreateLoading(false);
+    }
+  };
 
   const fetchFinanceData = async () => {
     try {
@@ -106,7 +182,14 @@ const FinanceDashboard = () => {
           </p>
         </div>
 
-        <div className="d-flex gap-2">
+        <div className="d-flex flex-wrap gap-2">
+          <button 
+            type="button" 
+            className="btn btn-primary"
+            onClick={() => setShowPaymentModal(true)}
+          >
+            <i className="ti ti-plus me-1"></i> Yeni Gelir / Taksit Ekle
+          </button>
           <Link to="/super-admin/expenses" className="btn btn-outline-danger">
             <i className="ti ti-receipt-2 me-1"></i> Şirket Giderleri & Net Kâr
           </Link>
@@ -335,6 +418,157 @@ const FinanceDashboard = () => {
           )}
         </div>
       </div>
+      {/* YENİ GELİR / TAKSİT EKLE MODAL */}
+      {showPaymentModal && (
+        <div 
+          className="modal fade show d-block" 
+          tabIndex={-1} 
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1055 }}
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content border-0 shadow">
+              <form onSubmit={handleCreatePayment}>
+                <div className="modal-header">
+                  <h5 className="modal-title fw-bold">
+                    <i className="ti ti-cash me-2 text-primary"></i>
+                    Yeni Gelir / Taksit Ekle
+                  </h5>
+                  <button 
+                    type="button" 
+                    className="btn-close" 
+                    onClick={() => setShowPaymentModal(false)}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold">
+                      Kurum (Okul) <span className="text-danger">*</span>
+                    </label>
+                    <select
+                      className="form-select"
+                      value={newPayment.tenant_id}
+                      onChange={(e) => setNewPayment({ ...newPayment, tenant_id: e.target.value })}
+                      required
+                    >
+                      <option value="">-- Okul Seçiniz --</option>
+                      {tenants.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name} ({t.domain})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold">
+                      Taksit / Gelir Başlığı <span className="text-danger">*</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      className="form-control"
+                      placeholder="Örn: 2026-2027 Lisans 1. Taksit"
+                      value={newPayment.title}
+                      onChange={(e) => setNewPayment({ ...newPayment, title: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="row g-2 mb-3">
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">
+                        Tutar (₺) <span className="text-danger">*</span>
+                      </label>
+                      <input 
+                        type="number" 
+                        step="0.01"
+                        min="1"
+                        className="form-control"
+                        placeholder="Örn: 25000"
+                        value={newPayment.amount}
+                        onChange={(e) => setNewPayment({ ...newPayment, amount: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">
+                        Vade Tarihi <span className="text-danger">*</span>
+                      </label>
+                      <input 
+                        type="date" 
+                        className="form-control"
+                        value={newPayment.due_date}
+                        onChange={(e) => setNewPayment({ ...newPayment, due_date: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="row g-2 mb-3">
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Ödeme Durumu</label>
+                      <select 
+                        className="form-select"
+                        value={newPayment.status}
+                        onChange={(e) => setNewPayment({ ...newPayment, status: e.target.value as 'pending' | 'paid' })}
+                      >
+                        <option value="pending">Bekliyor (Taksit)</option>
+                        <option value="paid">Tahsil Edildi (Gelir)</option>
+                      </select>
+                    </div>
+                    <div className="col-md-6">
+                      <label className="form-label fw-semibold">Ödeme Yöntemi</label>
+                      <select 
+                        className="form-select"
+                        value={newPayment.payment_method}
+                        onChange={(e) => setNewPayment({ ...newPayment, payment_method: e.target.value })}
+                      >
+                        <option value="bank_transfer">Banka Havalesi / EFT</option>
+                        <option value="credit_card">Kredi Kartı</option>
+                        <option value="cash">Nakit</option>
+                        <option value="check">Çek / Senet</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold">Notlar (İsteğe bağlı)</label>
+                    <textarea 
+                      className="form-control"
+                      rows={2}
+                      placeholder="Ek açıklamalar, dekont no vb."
+                      value={newPayment.notes}
+                      onChange={(e) => setNewPayment({ ...newPayment, notes: e.target.value })}
+                    ></textarea>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary"
+                    onClick={() => setShowPaymentModal(false)}
+                    disabled={createLoading}
+                  >
+                    İptal
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary"
+                    disabled={createLoading}
+                  >
+                    {createLoading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-1"></span> Kaydediliyor...
+                      </>
+                    ) : (
+                      'Kaydet'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

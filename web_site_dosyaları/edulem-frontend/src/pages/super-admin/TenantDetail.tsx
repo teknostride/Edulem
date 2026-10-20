@@ -223,6 +223,7 @@ const TenantDetail = () => {
     e.preventDefault();
     try {
       await axiosClient.post(`/super-admin/tenants/${id}/payments`, {
+        tenant_id: id,
         title: newPayment.title,
         amount: Number(newPayment.amount),
         due_date: newPayment.due_date,

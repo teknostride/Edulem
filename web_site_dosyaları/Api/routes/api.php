@@ -1963,6 +1963,7 @@ Route::prefix('v1/super-admin')->group(function () {
         });
 
         Route::prefix('payments')->group(function () {
+            Route::post('/', [\App\Http\Controllers\SuperAdmin\TenantPaymentController::class, 'store']);
             Route::get('/{id}', [\App\Http\Controllers\SuperAdmin\TenantPaymentController::class, 'show']);
             Route::put('/{id}', [\App\Http\Controllers\SuperAdmin\TenantPaymentController::class, 'update']);
             Route::delete('/{id}', [\App\Http\Controllers\SuperAdmin\TenantPaymentController::class, 'destroy']);
